@@ -1,40 +1,29 @@
 //variables declaration and initialization
 
-const btn = document.querySelector("#new-quote");
 const quote = document.querySelector(".quote");
 const person = document.querySelector(".person");
-// const searchInput = document.querySelector("#searchInput");
-// const quotesList = [ ]
+const newQuote = document.querySelector("#new-quote");
+
+
 
 // Event Listeners
 
+// // Add event listener to form
+// document.querySelector("#searchForm").addEventListener('submit', (e) => {
+//   // Prevent default form behaviour
+//   e.preventDefault();
+//   const searchInput = document.querySelector("#searchInput").value
+//   console.log(searchInput)
+// })
+
 // Add event listener to button that generates new quote when trigged
-btn.addEventListener("click", () => {
+newQuote.addEventListener("click", () => {
   let randomQuote = Math.floor(Math.random() * quotes.length);
 
   quote.innerText = quotes[randomQuote].quote;
   person.innerText = quotes[randomQuote].person;
 });
 
-// // Add an event listener to the input field that filters the quotes based on the input value
-// searchInput.addEventListener("input", (e) => {
-//   // Get Input
-//   const searchString = e.target.value.toLowerCase();
-//   // filter the quotes based on the input value
-//   const filteredQuotes = quotes.filter((quote) => {
-//     return (
-//       quote.quote.toLowerCase().includes(searchString) ||
-//       quote.person.toLowerCase().includes(searchString)
-//     );
-//   });
-//   // Map the filtered quotes to an array of HTML elements
-//   const filteredQuotesHTML = filteredQuotes.map((quote) => {
-  
-//   });
-
-//   // Display the filtered quotes
-//   quotesList.innerHTML = filteredQuotesHTML.join("");
-// });
 
 // arrays of quotes
 const quotes = [

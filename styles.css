@@ -18,7 +18,7 @@ body{
 }
 
 .container{
-    width: 500px;
+    max-width: 500px;
     height: 450px;
 }
 
@@ -28,7 +28,6 @@ body{
     width: 100%;
     margin: 50px  auto 10px;
     padding: 5px;
-    border: 2px solid #eee;
     border-radius: 0 10px;
 }
 
@@ -36,28 +35,52 @@ body{
     margin-bottom: 2rem;
 }
 
-/* .quote-search{
+/* form {
+    width: 100%;
+}
+
+input[type=text]{ 
+    width: 50%;
+    border-radius: 10px 0 0 10px;
+}
+
+input[type=text]:focus{ 
+    outline: none;
+}
+
+input[type=submit]{ 
+    width: 20%;
+    margin-left: -1%;
+    border-radius: 0  10px 10px 0;
+    cursor: pointer;
+
+}
+
+input[type=submit]:hover{ 
+    background-color: #F08080;
+    color: #fff;
+}
+
+
+
+input{
     margin-bottom: 2rem;
     background-color: bisque;
     padding: 0.75rem 1rem;
     border-radius: 30px;
-    border: 2px solid #5c5b5b;
+    border: 1px solid #000;
     width: 100%;
-}
-
-.quote-search:focus{
-    outline: none;
-    border: 2px solid rgb(118, 118, 252);
 } */
 
+
 .main-content{
-    background-color: #eee;
+    /* background-color: #eee; */
+    border: 2px dashed #000;
     color: black;
     padding: 50px 40px;
     border-radius: 15px;
     width: 100%;
     height: auto;
-    box-shadow: 0 0 10px;
     margin-bottom: 9rem;
 }
 
@@ -67,46 +90,49 @@ body{
 }
 
 .person{
-    color: blue;
-    color: rgb(151, 13, 13);
+    color: #F08080;
     font-size: 1.5rem;
     margin-top: 20px;
     text-transform: uppercase;
 }
 
-.button{
+.btn{
     padding: 5px 10px;
-    border: 2px solid rgb(41, 40, 40);
-    color: #000;
+    background-color: #000;
+   border: none;
+    color: #fff;
     border-radius: 5px;
     margin-top: 20px;
     font-size: 1.3rem;
     cursor: pointer;
 }
 
-button:hover{
-    outline: none;
-    border: 2px solid rgb(71, 71, 252);
+.btn:hover{
+    background-color: #F08080;
+    color: #fff;
+    border: none;
 }
 
-button:focus{
+.btn:focus{
     outline: none;
-    border: 2px solid rgb(71, 71, 252);
+    
 }
 
-button:active{
-    background-color: rgb(41, 40, 40);
+.btn:active{
+    background-color: #F08080;
     color: #fff;
     border: none;
 }
 
 .socials{
-    color: rgb(151, 13, 13);
+    color: #000;
     margin-top: 1.5rem;
+    margin-bottom: 5%;
+    display: inline-block;
 }
 
 .socials:hover{
-    color: rgb(71, 71, 252);
+    color: #F08080;
 }
 
 .love{
