@@ -25,11 +25,10 @@
     />
 
     <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- css file -->
     <link rel="stylesheet" href="styles.css" />
@@ -46,21 +45,29 @@
         </div>
       </header>
 
-      <div class="main-content">
-        <p class="quote">
-          <q
-            >I'm unpredictable, I never know where I'm going until I get there,
-            I'm so random, I'm always growing, learning, changing, I'm never the
-            same person twice. But one thing you can be sure of about me; is I
-            will always do exactly what I want to do.</q
-          >
-        </p>
-        <p class="person">C. JoyBell C.</p>
+      <section class="filter-container">
+        <label for="categoryFilter">Filter by Category:</label>
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+        </select>
+      </section>
 
-        <button class="btn" id="new-quote" aria-label="new quote" autofocus>
+      <section class="quote-section">
+        <div class="quote-container">
+          <p class="quote-text" id="quoteText">
+            
+              I'm unpredictable, I never know where I'm going until I get
+              there, I'm so random, I'm always growing, learning, changing, I'm
+              never the same person twice. But one thing you can be sure of
+              about me; is I will always do exactly what I want to do.
+          </p>
+          <p class="quote-author" id="quoteAuthor">C. JoyBell C.</p>
+        </div>
+        <button class="btn" id="newQuote" aria-label="new quote" autofocus>
           New Quote
         </button>
-      </div>
+      </section>
+
       <footer>
         <p>
           <span>Copyright &copy; 2023.</span>
@@ -106,6 +113,6 @@
       src="https://kit.fontawesome.com/47ff7ea1ff.js"
       crossorigin="anonymous"
     ></script>
-    <script defer src="main.js"></script>
+    <script type="module" defer src="main.js"></script>
   </body>
 </html>
