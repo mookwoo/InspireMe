@@ -1,7 +1,6 @@
 import quotes from "./quotes.js"
 
 const categoryFilter = document.getElementById("categoryFilter");
-const quoteContainer = document.getElementById("quoteContainer");
 const newQuote = document.querySelector("#newQuote");
 
 const text = document.querySelector("#quoteText");
