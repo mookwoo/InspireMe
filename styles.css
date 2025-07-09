@@ -224,7 +224,6 @@ footer {
 
     #categoryFilter {
         width: 40%;
-        font-size: 1.8rem;
     }
 
     .heading{
@@ -251,5 +250,9 @@ footer {
 @media (min-width: 768px) {
     .container {
         max-width: 700px;
+    }
+
+    #categoryFilter {
+        font-size: 1.8rem;
     }
 }
