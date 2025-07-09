@@ -20,14 +20,19 @@ categories.forEach((category) => {
 let lastDisplayedIndex = -1; // Track last displayed quote's index
 
 function displayQuotes(filteredQuotes) {
-  if (filteredQuotes.length === 0) return; // Handle empty category
+  // Handle empty category
+  if (filteredQuotes.length === 0) {
+    text.textContent = "No quotes available for this category.";
+    author.textContent= "";
+    return; // Stop execution here
+    }
 
   // If only one quote exists, just display it without looping
   if (filteredQuotes.length === 1) {
     lastDisplayedIndex = 0;
-    text.innerText = `${filteredQuotes[0].text}`;
-    author.innerText = `${filteredQuotes[0].author}`;
-    return; // Stop execution here
+    text.textContent = `${filteredQuotes[0].text}`;
+    author.textContent = `${filteredQuotes[0].author}`;
+    return; // Stop execution here    
   }
 
   let newIndex; // store the index of the new random quote
@@ -40,8 +45,8 @@ function displayQuotes(filteredQuotes) {
   lastDisplayedIndex = newIndex;
    
   const randomQuote = filteredQuotes[newIndex];
-  text.innerText = `${randomQuote.text}`;
-  author.innerText = `${randomQuote.author}`;
+  text.textContent = `${randomQuote.text}`;
+  author.textContent = `${randomQuote.author}`;
 }
 
 //function to get quotes based on selected category
@@ -63,5 +68,5 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
-//Initial display (show any andom quote)
-displayQuotes(quotes);
+
+displayQuotes(quotes); //Initial display (show any random quote)
