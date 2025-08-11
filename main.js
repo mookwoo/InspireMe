@@ -70,3 +70,9 @@ newQuote.addEventListener("click", function () {
 
 
 displayQuotes(quotes); //Initial display (show any random quote)
+
+// Set the current year in the footer; this will dynamically set the year in the footer to the current year
+const currentYear = new Date().getFullYear();
+console.log(currentYear)
+document.getElementById("year").textContent = `${currentYear}.`;
+document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
