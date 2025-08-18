@@ -68,6 +68,78 @@
         </button>
       </section>
 
+      <!-- Admin Section (Hidden by default) -->
+      <section class="admin-section" id="adminSection" style="display: none;">
+        <div class="admin-header">
+          <h2>Quote Database Admin</h2>
+          <button class="btn btn-secondary" id="toggleAdmin">Hide Admin</button>
+        </div>
+        
+        <div class="admin-tabs">
+          <button class="tab-btn active" data-tab="add">Add Quote</button>
+          <button class="tab-btn" data-tab="manage">Manage Quotes</button>
+          <button class="tab-btn" data-tab="stats">Statistics</button>
+          <button class="tab-btn" data-tab="backup">Backup</button>
+        </div>
+
+        <!-- Add Quote Tab -->
+        <div class="tab-content active" id="add-tab">
+          <form class="quote-form" id="addQuoteForm">
+            <div class="form-group">
+              <label for="quoteTextInput">Quote Text:</label>
+              <textarea id="quoteTextInput" required placeholder="Enter the quote text..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="quoteAuthorInput">Author:</label>
+              <input type="text" id="quoteAuthorInput" required placeholder="Enter the author name...">
+            </div>
+            <div class="form-group">
+              <label for="quoteCategoryInput">Category:</label>
+              <input type="text" id="quoteCategoryInput" required placeholder="Enter category...">
+            </div>
+            <div class="form-group">
+              <label for="quoteTagsInput">Tags (comma separated):</label>
+              <input type="text" id="quoteTagsInput" placeholder="motivation, success, life...">
+            </div>
+            <button type="submit" class="btn">Add Quote</button>
+          </form>
+        </div>
+
+        <!-- Manage Quotes Tab -->
+        <div class="tab-content" id="manage-tab">
+          <div class="search-container">
+            <input type="text" id="searchQuotes" placeholder="Search quotes...">
+            <button class="btn" id="searchBtn">Search</button>
+          </div>
+          <div class="quotes-list" id="quotesList">
+            <!-- Quotes will be populated here -->
+          </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div class="tab-content" id="stats-tab">
+          <div class="stats-container" id="statsContainer">
+            <!-- Statistics will be populated here -->
+          </div>
+        </div>
+
+        <!-- Backup Tab -->
+        <div class="tab-content" id="backup-tab">
+          <div class="backup-actions">
+            <button class="btn" id="downloadBackup">Download Backup</button>
+            <div class="form-group">
+              <label for="backupFile">Restore from Backup:</label>
+              <input type="file" id="backupFile" accept=".json">
+              <button class="btn" id="restoreBackup">Restore</button>
+            </div>
+            <button class="btn btn-danger" id="clearDatabase">Clear All Data</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin Toggle Button -->
+      <button class="admin-toggle" id="adminToggle" title="Toggle Admin Panel">⚙️</button>
+
       <footer>
         <p>
           <span class="sr-only-year" id="sr-year"></span>
