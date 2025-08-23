@@ -235,31 +235,12 @@ class QuoteAdmin {
   }
 
   /**
-   * Edit a quote (simple prompt-based editing)
+   * Edit a quote using a custom modal dialog
    */
   editQuote(quoteId) {
     const quote = this.db.getQuoteById(quoteId);
     if (!quote) return;
-
-    const newText = prompt('Edit quote text:', quote.text);
-    if (newText === null) return;
-
-    const newAuthor = prompt('Edit author:', quote.author);
-    if (newAuthor === null) return;
-
-    const newCategory = prompt('Edit category:', quote.category);
-    if (newCategory === null) return;
-
-    if (newText.trim() && newAuthor.trim() && newCategory.trim()) {
-      this.db.updateQuote(quoteId, {
-        text: newText.trim(),
-        author: newAuthor.trim(),
-        category: newCategory.trim()
-      });
-      this.loadQuotesList();
-      this.updateCategoryDropdown();
-      this.showSuccess('Quote updated successfully!');
-    }
+    this.showEditQuoteModal(quoteId, quote);
   }
 
   /**
