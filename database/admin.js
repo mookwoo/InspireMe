@@ -349,13 +349,15 @@ class QuoteAdmin {
    * Handle database clearing
    */
   handleClearDatabase() {
-    if (this.db.clearDatabase()) {
-      this.showSuccess('Database cleared successfully!');
-      this.loadStats();
-      this.loadQuotesList();
-      this.updateCategoryDropdown();
-      // Refresh the main quote display
-      window.location.reload();
+    if (confirm('This will permanently delete all quotes. Are you sure you want to clear the database?')) {
+      if (this.db.clearDatabase()) {
+        this.showSuccess('Database cleared successfully!');
+        this.loadStats();
+        this.loadQuotesList();
+        this.updateCategoryDropdown();
+        // Refresh the main quote display
+        window.location.reload();
+      }
     }
   }
 
