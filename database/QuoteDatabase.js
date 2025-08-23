@@ -312,12 +312,9 @@ class QuoteDatabase {
    * Clear all data (use with caution)
    */
   clearDatabase() {
-    if (confirm('Are you sure you want to clear all quotes? This action cannot be undone.')) {
-      localStorage.removeItem(this.storageKey);
-      this.initializeDatabase();
-      return true;
-    }
-    return false;
+    localStorage.removeItem(this.storageKey);
+    this.initializeDatabase();
+    return true;
   }
 
   /**
