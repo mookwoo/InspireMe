@@ -97,5 +97,3 @@ console.log(currentYear)
 document.getElementById("year").textContent = `${currentYear}.`;
 document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
 
-// Make database available for debugging/admin features (remove in production)
-window.quoteDB = db;
