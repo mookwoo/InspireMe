@@ -1,13 +1,13 @@
 import quotes from "./quotes.js";
 import QuoteDatabase from "./database/QuoteDatabase.js";
 import QuoteAdmin from "./database/admin.js";
-import AuthSystem from "./auth.js";
-
-// Initialize authentication system
-const auth = new AuthSystem();
+import AuthManager from "./database/auth.js";
 
 // Initialize database
 const db = new QuoteDatabase();
+
+// Initialize authentication manager
+const auth = new AuthManager();
 
 // Import existing quotes if database is empty
 if (db.getAllQuotes().length === 0) {
@@ -16,11 +16,8 @@ if (db.getAllQuotes().length === 0) {
   console.log(`Imported ${importedCount} quotes successfully!`);
 }
 
-// Initialize admin interface
-const admin = new QuoteAdmin(db);
-
-// Make auth system available globally for admin integration
-window.authSystem = auth;
+// Initialize admin interface with authentication
+const admin = new QuoteAdmin(db, auth);
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -31,9 +28,9 @@ const author = document.querySelector("#quoteAuthor");
 // Get categories from database
 const categories = db.getAllCategories();
 
-// Populating the dropdown
+// Populate the dropdown
 categories.forEach((category) => {
-  let option = document.createElement("option");
+  const option = document.createElement("option");
   option.value = category;
   option.textContent = category;
   categoryFilter.appendChild(option);
@@ -45,9 +42,9 @@ function displayQuotes(filteredQuotes) {
   // Handle empty category
   if (filteredQuotes.length === 0) {
     text.textContent = "No quotes available for this category.";
-    author.textContent= "";
-    return; // Stop execution here
-    }
+    author.textContent = "";
+    return;
+  }
 
   // If only one quote exists, just display it without looping
   if (filteredQuotes.length === 1) {
@@ -55,13 +52,11 @@ function displayQuotes(filteredQuotes) {
     const quote = filteredQuotes[0];
     text.textContent = `${quote.text}`;
     author.textContent = `${quote.author}`;
-    
-    // Increment view count in database
-    db.incrementViews(quote.id);
-    return; // Stop execution here    
+    db.incrementViews(quote.id); // Increment view count
+    return;
   }
 
-  let newIndex; // store the index of the new random quote
+  let newIndex;
 
   // Ensure we get a new quote every time
   do {
@@ -69,16 +64,16 @@ function displayQuotes(filteredQuotes) {
   } while (newIndex === lastDisplayedIndex && filteredQuotes.length > 1);
 
   lastDisplayedIndex = newIndex;
-   
+
   const randomQuote = filteredQuotes[newIndex];
   text.textContent = `${randomQuote.text}`;
   author.textContent = `${randomQuote.author}`;
-  
+
   // Increment view count in database
   db.incrementViews(randomQuote.id);
 }
 
-//function to get quotes based on selected category
+// Get quotes based on selected category
 function getFilteredQuotes() {
   const selectedCategory = categoryFilter.value;
   return db.getQuotesByCategory(selectedCategory);
@@ -87,7 +82,7 @@ function getFilteredQuotes() {
 // Event listener for category selection
 categoryFilter.addEventListener("change", function () {
   const filteredQuotes = getFilteredQuotes();
-  displayQuotes(filteredQuotes)
+  displayQuotes(filteredQuotes);
 });
 
 newQuote.addEventListener("click", function () {
@@ -95,16 +90,16 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
+// Initial display (show any random quote)
+displayQuotes(db.getAllQuotes());
 
-displayQuotes(db.getAllQuotes()); //Initial display (show any random quote)
-
-// Set the current year in the footer; this will dynamically set the year in the footer to the current year
+// Set the current year in the footer
 const currentYear = new Date().getFullYear();
-console.log(currentYear)
+console.log(currentYear);
 document.getElementById("year").textContent = `${currentYear}.`;
-document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
+document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`;
 
-// Make database available for debugging/admin features (remove in production)
+// Expose database for debugging (consider removing in production)
 window.quoteDB = db;
 
 // Ensure admin panel is properly secured on page load
