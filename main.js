@@ -28,9 +28,9 @@ const author = document.querySelector("#quoteAuthor");
 // Get categories from database
 const categories = db.getAllCategories();
 
-// Populating the dropdown
+// Populate the dropdown
 categories.forEach((category) => {
-  let option = document.createElement("option");
+  const option = document.createElement("option");
   option.value = category;
   option.textContent = category;
   categoryFilter.appendChild(option);
@@ -42,9 +42,9 @@ function displayQuotes(filteredQuotes) {
   // Handle empty category
   if (filteredQuotes.length === 0) {
     text.textContent = "No quotes available for this category.";
-    author.textContent= "";
-    return; // Stop execution here
-    }
+    author.textContent = "";
+    return;
+  }
 
   // If only one quote exists, just display it without looping
   if (filteredQuotes.length === 1) {
@@ -52,13 +52,11 @@ function displayQuotes(filteredQuotes) {
     const quote = filteredQuotes[0];
     text.textContent = `${quote.text}`;
     author.textContent = `${quote.author}`;
-    
-    // Increment view count in database
-    db.incrementViews(quote.id);
-    return; // Stop execution here    
+    db.incrementViews(quote.id); // Increment view count
+    return;
   }
 
-  let newIndex; // store the index of the new random quote
+  let newIndex;
 
   // Ensure we get a new quote every time
   do {
@@ -66,16 +64,16 @@ function displayQuotes(filteredQuotes) {
   } while (newIndex === lastDisplayedIndex && filteredQuotes.length > 1);
 
   lastDisplayedIndex = newIndex;
-   
+
   const randomQuote = filteredQuotes[newIndex];
   text.textContent = `${randomQuote.text}`;
   author.textContent = `${randomQuote.author}`;
-  
+
   // Increment view count in database
   db.incrementViews(randomQuote.id);
 }
 
-//function to get quotes based on selected category
+// Get quotes based on selected category
 function getFilteredQuotes() {
   const selectedCategory = categoryFilter.value;
   return db.getQuotesByCategory(selectedCategory);
@@ -84,7 +82,7 @@ function getFilteredQuotes() {
 // Event listener for category selection
 categoryFilter.addEventListener("change", function () {
   const filteredQuotes = getFilteredQuotes();
-  displayQuotes(filteredQuotes)
+  displayQuotes(filteredQuotes);
 });
 
 newQuote.addEventListener("click", function () {
@@ -92,14 +90,22 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
+// Initial display (show any random quote)
+displayQuotes(db.getAllQuotes());
 
-displayQuotes(db.getAllQuotes()); //Initial display (show any random quote)
-
-// Set the current year in the footer; this will dynamically set the year in the footer to the current year
+// Set the current year in the footer
 const currentYear = new Date().getFullYear();
-console.log(currentYear)
+console.log(currentYear);
 document.getElementById("year").textContent = `${currentYear}.`;
-document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
+document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`;
 
-// Make database available for debugging/admin features (remove in production)
+// Expose database for debugging (consider removing in production)
 window.quoteDB = db;
+
+// Ensure admin panel is properly secured on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const adminSection = document.getElementById('adminSection');
+  if (adminSection && !auth.isAuthenticated()) {
+    adminSection.style.display = 'none';
+  }
+});

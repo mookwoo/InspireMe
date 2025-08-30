@@ -22,7 +22,7 @@ class QuoteAdmin {
    * Setup all event listeners for admin interface
    */
   setupEventListeners() {
-    // Admin toggle - now shows login modal
+    // Admin toggle - now integrated with authentication
     const adminToggle = document.getElementById('adminToggle');
     const toggleAdmin = document.getElementById('toggleAdmin');
     const adminSection = document.getElementById('adminSection');
@@ -476,7 +476,7 @@ class QuoteAdmin {
 
     // Close modal on Escape key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && loginModal.style.display !== 'none') {
+      if (e.key === 'Escape' && loginModal && loginModal.style.display !== 'none') {
         this.hideLoginModal();
       }
     });
@@ -490,18 +490,22 @@ class QuoteAdmin {
     const loginError = document.getElementById('loginError');
     
     // Clear any previous errors
-    loginError.style.display = 'none';
-    loginError.textContent = '';
+    if (loginError) {
+      loginError.style.display = 'none';
+      loginError.textContent = '';
+    }
     
     // Clear form
-    document.getElementById('loginForm').reset();
+    document.getElementById('loginForm')?.reset();
     
     // Show modal
-    loginModal.style.display = 'flex';
+    if (loginModal) {
+      loginModal.style.display = 'flex';
+    }
     
     // Focus on username field
     setTimeout(() => {
-      document.getElementById('loginUsername').focus();
+      document.getElementById('loginUsername')?.focus();
     }, 100);
   }
 
@@ -510,7 +514,7 @@ class QuoteAdmin {
    */
   hideLoginModal() {
     const loginModal = document.getElementById('loginModal');
-    loginModal.style.display = 'none';
+    if (loginModal) loginModal.style.display = 'none';
   }
 
   /**
@@ -531,7 +535,7 @@ class QuoteAdmin {
       this.showSuccess('Login successful! Welcome to the admin panel.');
       // Show admin panel
       const adminSection = document.getElementById('adminSection');
-      adminSection.style.display = 'block';
+      if (adminSection) adminSection.style.display = 'block';
     } else {
       this.showLoginError('Invalid username or password. Please try again.');
     }
@@ -542,8 +546,10 @@ class QuoteAdmin {
    */
   showLoginError(message) {
     const loginError = document.getElementById('loginError');
-    loginError.textContent = message;
-    loginError.style.display = 'block';
+    if (loginError) {
+      loginError.textContent = message;
+      loginError.style.display = 'block';
+    }
   }
 
   /**
