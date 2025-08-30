@@ -5,7 +5,7 @@
 class AuthManager {
   constructor() {
     this.storageKey = 'inspireme_admin_session';
-    this.sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    this.sessionTimeout = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
     this.defaultCredentials = {
       username: 'admin',
       // generate a random fallback once, store in localStorage for transparency

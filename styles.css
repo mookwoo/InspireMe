@@ -591,6 +591,12 @@ footer nav a {
   margin: 0;
 }
 
+.admin-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .admin-tabs {
   display: flex;
   gap: 10px;

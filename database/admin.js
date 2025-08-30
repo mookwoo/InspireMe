@@ -41,6 +41,12 @@ class QuoteAdmin {
       adminSection.style.display = 'none';
     });
 
+    // Logout functionality
+    const logoutAdmin = document.getElementById('logoutAdmin');
+    logoutAdmin?.addEventListener('click', () => {
+      this.handleLogout();
+    });
+
     // Login modal event listeners
     this.setupLoginModal();
 
@@ -547,6 +553,22 @@ class QuoteAdmin {
     this.showLoginError('Invalid username or password. Please try again.');
   }
 }
+
+  /**
+   * Handle logout functionality
+   */
+  handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+      this.auth.logout();
+      this.showSuccess('Logged out successfully!');
+      
+      // Hide admin section
+      const adminSection = document.getElementById('adminSection');
+      if (adminSection) {
+        adminSection.style.display = 'none';
+      }
+    }
+  }
 
   /**
    * Show login error message
