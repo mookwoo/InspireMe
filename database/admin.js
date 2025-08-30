@@ -521,25 +521,32 @@ class QuoteAdmin {
    * Handle login form submission
    */
   handleLogin() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const usernameEl = document.getElementById('loginUsername');
+    const passwordEl = document.getElementById('loginPassword');
     const loginError = document.getElementById('loginError');
+
+    if (!usernameEl || !passwordEl) {
+      this.showLoginError('Login form is unavailable. Please reload.');
+      return;
+    }
+    const username = usernameEl.value.trim();
+    const password = passwordEl.value;
 
     if (!username || !password) {
       this.showLoginError('Please enter both username and password.');
       return;
     }
-
-    if (this.auth.login(username, password)) {
-      this.hideLoginModal();
-      this.showSuccess('Login successful! Welcome to the admin panel.');
-      // Show admin panel
-      const adminSection = document.getElementById('adminSection');
-      if (adminSection) adminSection.style.display = 'block';
-    } else {
-      this.showLoginError('Invalid username or password. Please try again.');
+  if (this.auth.login(username, password)) {
+    this.hideLoginModal();
+    this.showSuccess('Login successful! Welcome to the admin panel.');
+    const adminSection = document.getElementById('adminSection');
+    if (adminSection) {
+      adminSection.style.display = this.auth.isAuthenticated() ? 'block' : 'none';
     }
+  } else {
+    this.showLoginError('Invalid username or password. Please try again.');
   }
+}
 
   /**
    * Show login error message

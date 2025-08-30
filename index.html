@@ -138,23 +138,23 @@
       </section>
 
       <!-- Admin Toggle Button -->
-      <button class="admin-toggle" id="adminToggle" title="Toggle Admin Panel">⚙️</button>
+      <button class="admin-toggle" id="adminToggle" title="Toggle Admin Panel" aria-controls="adminSection" aria-expanded="false">⚙️</button>
 
       <!-- Admin Login Modal -->
-      <div class="login-modal" id="loginModal" style="display: none;">
+     <div class="login-modal" id="loginModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
         <div class="login-modal-content">
           <div class="login-header">
-            <h3>Admin Login</h3>
-            <button class="login-close" id="loginClose">&times;</button>
+            <h3 id="loginTitle">Admin Login</h3>
+            <button class="login-close" id="loginClose" type="button" aria-label="Close login modal">&times;</button>
           </div>
           <form class="login-form" id="loginForm">
             <div class="form-group">
               <label for="loginUsername">Username:</label>
-              <input type="text" id="loginUsername" required placeholder="Enter username">
+              <input type="text" id="loginUsername" required placeholder="Enter username" autocomplete="username" />
             </div>
             <div class="form-group">
               <label for="loginPassword">Password:</label>
-              <input type="password" id="loginPassword" required placeholder="Enter password">
+              <input type="password" id="loginPassword" required placeholder="Enter password" autocomplete="current-password" />
             </div>
             <div class="login-error" id="loginError" style="display: none;"></div>
             <button type="submit" class="btn login-btn">Login</button>
@@ -201,7 +201,7 @@
             href="https://github.com/chiomavera/"
             class="socials"
             target="_blank"
-            aria-label="Veiw Github Profile"
+            aria-label="View GitHub Profile"
             ><svg
               viewBox="0 0 24 24"
               fill="currentColor"

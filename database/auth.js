@@ -5,11 +5,18 @@
 class AuthManager {
   constructor() {
     this.storageKey = 'inspireme_admin_session';
+    this.sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     this.defaultCredentials = {
       username: 'admin',
-      password: 'password'
+      // generate a random fallback once, store in localStorage for transparency
+      password: localStorage.getItem('inspireme_admin_default_pw') ||
+                (() => { const p = crypto?.getRandomValues ? 
+                  Array.from(crypto.getRandomValues(new Uint8Array(6)), b=>b.toString(16).padStart(2,'')).join('').slice(0,10) :
+                  Math.random().toString(36).slice(2,12);
+                  localStorage.setItem('inspireme_admin_default_pw', p);
+                  return p;
+                })()
     };
-    this.sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours
   }
 
   /**
