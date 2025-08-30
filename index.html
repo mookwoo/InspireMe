@@ -140,6 +140,34 @@
       <!-- Admin Toggle Button -->
       <button class="admin-toggle" id="adminToggle" title="Toggle Admin Panel">⚙️</button>
 
+      <!-- Admin Login Modal -->
+      <div class="modal-overlay" id="loginModal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Admin Login</h3>
+            <button class="modal-close" id="closeLoginModal">&times;</button>
+          </div>
+          <form class="login-form" id="loginForm">
+            <div class="form-group">
+              <label for="username">Username:</label>
+              <input type="text" id="username" required placeholder="Enter username">
+            </div>
+            <div class="form-group">
+              <label for="password">Password:</label>
+              <input type="password" id="password" required placeholder="Enter password">
+            </div>
+            <div class="login-error" id="loginError" style="display: none;"></div>
+            <div class="form-actions">
+              <button type="submit" class="btn">Login</button>
+              <button type="button" class="btn btn-secondary" id="cancelLogin">Cancel</button>
+            </div>
+          </form>
+          <div class="default-credentials">
+            <small>Default credentials: admin / admin</small>
+          </div>
+        </div>
+      </div>
+
       <footer>
         <p>
           <span class="sr-only-year" id="sr-year"></span>

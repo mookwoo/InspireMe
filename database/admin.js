@@ -21,12 +21,21 @@ class QuoteAdmin {
    * Setup all event listeners for admin interface
    */
   setupEventListeners() {
-    // Admin toggle
+    // Admin toggle - now integrated with authentication
     const adminToggle = document.getElementById('adminToggle');
     const toggleAdmin = document.getElementById('toggleAdmin');
     const adminSection = document.getElementById('adminSection');
 
     adminToggle?.addEventListener('click', () => {
+      // Get auth system instance from window if available
+      const auth = window.authSystem;
+      
+      if (auth && !auth.handleAdminToggle()) {
+        // Authentication required - auth system will handle showing login modal
+        return;
+      }
+      
+      // User is authenticated or no auth system, proceed with normal toggle
       adminSection.style.display = adminSection.style.display === 'none' ? 'block' : 'none';
     });
 

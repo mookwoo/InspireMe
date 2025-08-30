@@ -1,6 +1,10 @@
 import quotes from "./quotes.js";
 import QuoteDatabase from "./database/QuoteDatabase.js";
 import QuoteAdmin from "./database/admin.js";
+import AuthSystem from "./auth.js";
+
+// Initialize authentication system
+const auth = new AuthSystem();
 
 // Initialize database
 const db = new QuoteDatabase();
@@ -14,6 +18,9 @@ if (db.getAllQuotes().length === 0) {
 
 // Initialize admin interface
 const admin = new QuoteAdmin(db);
+
+// Make auth system available globally for admin integration
+window.authSystem = auth;
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -99,3 +106,11 @@ document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
 
 // Make database available for debugging/admin features (remove in production)
 window.quoteDB = db;
+
+// Ensure admin panel is properly secured on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const adminSection = document.getElementById('adminSection');
+  if (adminSection && !auth.isAuthenticated()) {
+    adminSection.style.display = 'none';
+  }
+});
