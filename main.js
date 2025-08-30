@@ -1,9 +1,13 @@
 import quotes from "./quotes.js";
 import QuoteDatabase from "./database/QuoteDatabase.js";
 import QuoteAdmin from "./database/admin.js";
+import AuthManager from "./database/auth.js";
 
 // Initialize database
 const db = new QuoteDatabase();
+
+// Initialize authentication manager
+const auth = new AuthManager();
 
 // Import existing quotes if database is empty
 if (db.getAllQuotes().length === 0) {
@@ -12,8 +16,8 @@ if (db.getAllQuotes().length === 0) {
   console.log(`Imported ${importedCount} quotes successfully!`);
 }
 
-// Initialize admin interface
-const admin = new QuoteAdmin(db);
+// Initialize admin interface with authentication
+const admin = new QuoteAdmin(db, auth);
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");

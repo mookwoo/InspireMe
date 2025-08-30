@@ -3,8 +3,9 @@
  * Provides UI functionality for managing quotes, viewing stats, and backup/restore
  */
 class QuoteAdmin {
-  constructor(database) {
+  constructor(database, authManager) {
     this.db = database;
+    this.auth = authManager;
     this.currentTab = 'add';
     this.initializeAdmin();
   }
@@ -21,18 +22,27 @@ class QuoteAdmin {
    * Setup all event listeners for admin interface
    */
   setupEventListeners() {
-    // Admin toggle
+    // Admin toggle - now shows login modal
     const adminToggle = document.getElementById('adminToggle');
     const toggleAdmin = document.getElementById('toggleAdmin');
     const adminSection = document.getElementById('adminSection');
 
     adminToggle?.addEventListener('click', () => {
-      adminSection.style.display = adminSection.style.display === 'none' ? 'block' : 'none';
+      if (this.auth.isAuthenticated()) {
+        // User is authenticated, toggle admin panel
+        adminSection.style.display = adminSection.style.display === 'none' ? 'block' : 'none';
+      } else {
+        // User not authenticated, show login modal
+        this.showLoginModal();
+      }
     });
 
     toggleAdmin?.addEventListener('click', () => {
       adminSection.style.display = 'none';
     });
+
+    // Login modal event listeners
+    this.setupLoginModal();
 
     // Tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -436,6 +446,104 @@ class QuoteAdmin {
     setTimeout(() => {
       messageDiv.remove();
     }, 3000);
+  }
+
+  /**
+   * Setup login modal event listeners
+   */
+  setupLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    const loginClose = document.getElementById('loginClose');
+    const loginForm = document.getElementById('loginForm');
+
+    // Close modal on close button click
+    loginClose?.addEventListener('click', () => {
+      this.hideLoginModal();
+    });
+
+    // Close modal on outside click
+    loginModal?.addEventListener('click', (e) => {
+      if (e.target === loginModal) {
+        this.hideLoginModal();
+      }
+    });
+
+    // Handle login form submission
+    loginForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleLogin();
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && loginModal.style.display !== 'none') {
+        this.hideLoginModal();
+      }
+    });
+  }
+
+  /**
+   * Show login modal
+   */
+  showLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    const loginError = document.getElementById('loginError');
+    
+    // Clear any previous errors
+    loginError.style.display = 'none';
+    loginError.textContent = '';
+    
+    // Clear form
+    document.getElementById('loginForm').reset();
+    
+    // Show modal
+    loginModal.style.display = 'flex';
+    
+    // Focus on username field
+    setTimeout(() => {
+      document.getElementById('loginUsername').focus();
+    }, 100);
+  }
+
+  /**
+   * Hide login modal
+   */
+  hideLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    loginModal.style.display = 'none';
+  }
+
+  /**
+   * Handle login form submission
+   */
+  handleLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const loginError = document.getElementById('loginError');
+
+    if (!username || !password) {
+      this.showLoginError('Please enter both username and password.');
+      return;
+    }
+
+    if (this.auth.login(username, password)) {
+      this.hideLoginModal();
+      this.showSuccess('Login successful! Welcome to the admin panel.');
+      // Show admin panel
+      const adminSection = document.getElementById('adminSection');
+      adminSection.style.display = 'block';
+    } else {
+      this.showLoginError('Invalid username or password. Please try again.');
+    }
+  }
+
+  /**
+   * Show login error message
+   */
+  showLoginError(message) {
+    const loginError = document.getElementById('loginError');
+    loginError.textContent = message;
+    loginError.style.display = 'block';
   }
 
   /**
