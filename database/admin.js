@@ -65,6 +65,19 @@ class QuoteAdmin {
       this.handleAddQuote();
     });
 
+    // Category dropdown change
+    const categorySelect = document.getElementById('quoteCategorySelect');
+    categorySelect?.addEventListener('change', (e) => {
+      const newCategoryInput = document.getElementById('newCategoryInput');
+      if (e.target.value === 'add_new') {
+        newCategoryInput.style.display = 'block';
+        newCategoryInput.required = true;
+      } else {
+        newCategoryInput.style.display = 'none';
+        newCategoryInput.required = false;
+      }
+    });
+
     // Search functionality
     const searchBtn = document.getElementById('searchBtn');
     const searchInput = document.getElementById('searchQuotes');
@@ -117,6 +130,9 @@ class QuoteAdmin {
 
     // Load content based on tab
     switch (tabName) {
+      case 'add':
+        this.populateAddCategoryDropdown();
+        break;
       case 'manage':
         this.loadQuotesList();
         break;
@@ -124,6 +140,28 @@ class QuoteAdmin {
         this.loadStats();
         break;
     }
+  }
+
+  /**
+   * Populate the category dropdown in the "Add Quote" tab
+   */
+  populateAddCategoryDropdown() {
+    const categorySelect = document.getElementById('quoteCategorySelect');
+    if (!categorySelect) return;
+
+    const categories = this.db.getAllCategories();
+    
+    // Clear existing options except the first two
+    while (categorySelect.options.length > 2) {
+      categorySelect.remove(2);
+    }
+
+    categories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      categorySelect.appendChild(option);
+    });
   }
 
   /**
@@ -581,14 +619,12 @@ class QuoteAdmin {
     }
   }
 
-  /**
-   * Escape HTML to prevent XSS
-   */
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
   }
-}
-
-export default QuoteAdmin;
