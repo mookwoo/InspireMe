@@ -590,3 +590,5 @@ class QuoteAdmin {
     return div.innerHTML;
   }
 }
+
+export default QuoteAdmin;
