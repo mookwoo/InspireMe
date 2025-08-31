@@ -92,29 +92,21 @@
               <label for="quoteTextInput">Quote Text:</label>
               <textarea id="quoteTextInput" required placeholder="Enter the quote text..."></textarea>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="quoteAuthorInput">Author:</label>
-                <input type="text" id="quoteAuthorInput" required placeholder="Enter the author name...">
-              </div>
-              <div class="form-group">
-                <label for="quoteCategorySelect">Category:</label>
-                <select id="quoteCategorySelect" required>
-                  <option value="" disabled selected>Select a category</option>
-                  <option value="add_new">-- Add New Category --</option>
-                </select>
-                <input type="text" id="newCategoryInput" placeholder="Enter new category name..." style="display: none; margin-top: 10px;">
-              </div>
+            <div class="form-group">
+              <label for="quoteAuthorInput">Author:</label>
+              <input type="text" id="quoteAuthorInput" required placeholder="Enter the author name...">
             </div>
             <div class="form-group">
-              <label for="quoteTagsInput">Tags (optional, comma-separated):</label>
-              <input type="text" id="quoteTagsInput" placeholder="e.g., motivation, life, success">
+              <label for="quoteCategoryInput">Category:</label>
+              <input type="text" id="quoteCategoryInput" required placeholder="Enter category...">
+            </div>
+            <div class="form-group">
+              <label for="quoteTagsInput">Tags (comma separated):</label>
+              <input type="text" id="quoteTagsInput" placeholder="motivation, success, life...">
             </div>
             <button type="submit" class="btn">Add Quote</button>
           </form>
-        </div>
-
-        <!-- Manage Quotes Tab -->
+        </div>        <!-- Manage Quotes Tab -->
         <div class="tab-content" id="manage-tab">
           <div class="search-container">
             <input type="text" id="searchQuotes" placeholder="Search quotes...">
