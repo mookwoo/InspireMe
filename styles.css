@@ -675,6 +675,16 @@ footer nav a {
   resize: vertical;
 }
 
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+
 .search-container {
   display: flex;
   gap: 10px;
