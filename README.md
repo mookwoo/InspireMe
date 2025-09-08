@@ -30,9 +30,10 @@ I built InspireMe from scratch as a way to practice:
 - Deploying a static site and iterating on design and function
 
 I especially loved how quickly I could test and improve the quote logic and UI. In future versions, I plan to:
-- Replace the static quote array with a **quote API** (e.g., Quotable or They Said So)  
-- Add animations and transitions to improve UX  
-- Implement local storage for saving favorite quotes
+- Save the array quotes to a database.  
+- Implement a favourite quotes feature  
+- Implement a social searching button
+- Implement a form that allows users to submit quotes.
 
 ---
 
@@ -51,3 +52,4 @@ I especially loved how quickly I could test and improve the quote logic and UI. 
 
 ## 📬 Feedback or Collaboration?
 Feel free to [connect on LinkedIn](https://www.linkedin.com/in/chioma-vera-nkanmuo/) or open an issue if you'd like to contribute, suggest quotes, or collaborate on future versions.
+
