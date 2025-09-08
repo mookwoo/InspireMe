@@ -6,15 +6,15 @@
 
 ---
 
-## 🧩 Features
-- 🎯 **Categorized Quotes** – Filter quotes by themes like Motivation, Humor, and Philosophy  
-- 📚 **Dynamic Quote Generation** – Get a new quote with a single click  
-- 💡 **User-Friendly Interface** – Built with simplicity and clarity in mind  
-- 🔄 **Regular Updates** – Expandable with more categories or future API integration
+## Features
+- **Categorized Quotes** – Filter quotes by themes like Motivation, Humor, and Philosophy  
+- **Dynamic Quote Generation** – Get a new quote with a single click  
+- **User-Friendly Interface** – Built with simplicity and clarity in mind  
+- **Regular Updates** – Expandable with more categories or future API integration
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 - **HTML5** – Semantic structure  
 - **CSS3** – Custom styling and layout  
 - **JavaScript (Vanilla)** – DOM manipulation and quote logic  
@@ -22,7 +22,7 @@
 
 ---
 
-## 👩🏽‍💻 My Role & Learnings
+## My Role & Learnings
 
 I built InspireMe from scratch as a way to practice:
 - DOM manipulation using arrays and event handling  
@@ -37,19 +37,20 @@ I especially loved how quickly I could test and improve the quote logic and UI. 
 
 ---
 
-## 🚀 How to Use
+## How to Use
 1. Visit the live site  
 2. Click "New Quote" to refresh the message  
 3. Filter quotes by category to suit your mood  
 
 ---
 
-## 📎 Project Links
-- 🔗 **Live Site:** [inspireme-by-vera.netlify.app](https://inspireme-by-vera.netlify.app/)
-- 🧑🏽‍💻 **Code Repository:** [github.com/chiomavera/InspireMe](https://github.com/chiomavera/InspireMe)
+## Project Links
+- **Live Site:** [inspireme-by-vera.netlify.app](https://inspireme-by-vera.netlify.app/)
+- **Code Repository:** [github.com/chiomavera/InspireMe](https://github.com/chiomavera/InspireMe)
 
 ---
 
-## 📬 Feedback or Collaboration?
+## Feedback or Collaboration?
 Feel free to [connect on LinkedIn](https://www.linkedin.com/in/chioma-vera-nkanmuo/) or open an issue if you'd like to contribute, suggest quotes, or collaborate on future versions.
+
 
