@@ -545,9 +545,11 @@ class SupabaseDatabase {
   /**
    * Clear all data (admin function - use with caution)
    * Note: This will only work if user has appropriate permissions
+   * @param {boolean} confirmed - Must be true to proceed with clearing the database
    */
-  async clearDatabase() {
-    if (!confirm('Are you sure you want to clear all quotes? This action cannot be undone.')) {
+  async clearDatabase(confirmed = false) {
+    if (!confirmed) {
+      // Confirmation required; abort if not confirmed
       return false;
     }
 
