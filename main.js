@@ -32,10 +32,7 @@ async function initializeDatabase() {
       const stats = await migrationUtil.getMigrationStats();
       if (stats.hasLocalData && !stats.migrationCompleted) {
         // Show migration option to user
-        const shouldMigrate = confirm(
-          `Found ${stats.localQuotesCount} quotes in local storage.\n` +
-          'Would you like to migrate them to Supabase for cloud sync?'
-        );
+        const shouldMigrate = await migrationUtil.showMigrationInterface(stats);
         
         if (shouldMigrate && auth.isAuthenticated()) {
           const result = await migrationUtil.migrateData();
