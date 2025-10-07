@@ -1,4 +1,19 @@
-import quotes from "./quotes.js"
+import quotes from "./quotes.js";
+import QuoteDatabase from "./database/QuoteDatabase.js";
+import QuoteAdmin from "./database/admin.js";
+
+// Initialize database
+const db = new QuoteDatabase();
+
+// Import existing quotes if database is empty
+if (db.getAllQuotes().length === 0) {
+  console.log('Importing existing quotes to database...');
+  const importedCount = db.importQuotes(quotes);
+  console.log(`Imported ${importedCount} quotes successfully!`);
+}
+
+// Initialize admin interface
+const admin = new QuoteAdmin(db);
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -6,8 +21,8 @@ const newQuote = document.querySelector("#newQuote");
 const text = document.querySelector("#quoteText");
 const author = document.querySelector("#quoteAuthor");
 
-// Extracting unique categories
-const categories = [...new Set(quotes.map((q) => q.category))];
+// Get categories from database
+const categories = db.getAllCategories();
 
 // Populating the dropdown
 categories.forEach((category) => {
@@ -20,14 +35,23 @@ categories.forEach((category) => {
 let lastDisplayedIndex = -1; // Track last displayed quote's index
 
 function displayQuotes(filteredQuotes) {
-  if (filteredQuotes.length === 0) return; // Handle empty category
+  // Handle empty category
+  if (filteredQuotes.length === 0) {
+    text.textContent = "No quotes available for this category.";
+    author.textContent= "";
+    return; // Stop execution here
+    }
 
   // If only one quote exists, just display it without looping
   if (filteredQuotes.length === 1) {
     lastDisplayedIndex = 0;
-    text.innerText = `${filteredQuotes[0].text}`;
-    author.innerText = `${filteredQuotes[0].author}`;
-    return; // Stop execution here
+    const quote = filteredQuotes[0];
+    text.textContent = `${quote.text}`;
+    author.textContent = `${quote.author}`;
+    
+    // Increment view count in database
+    db.incrementViews(quote.id);
+    return; // Stop execution here    
   }
 
   let newIndex; // store the index of the new random quote
@@ -40,16 +64,17 @@ function displayQuotes(filteredQuotes) {
   lastDisplayedIndex = newIndex;
    
   const randomQuote = filteredQuotes[newIndex];
-  text.innerText = `${randomQuote.text}`;
-  author.innerText = `${randomQuote.author}`;
+  text.textContent = `${randomQuote.text}`;
+  author.textContent = `${randomQuote.author}`;
+  
+  // Increment view count in database
+  db.incrementViews(randomQuote.id);
 }
 
 //function to get quotes based on selected category
 function getFilteredQuotes() {
   const selectedCategory = categoryFilter.value;
-  return selectedCategory === "all" 
-  ? quotes
-  : quotes.filter(q => q.category === selectedCategory);
+  return db.getQuotesByCategory(selectedCategory);
 }
 
 // Event listener for category selection
@@ -63,5 +88,12 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
-//Initial display (show any andom quote)
-displayQuotes(quotes);
+
+displayQuotes(db.getAllQuotes()); //Initial display (show any random quote)
+
+// Set the current year in the footer; this will dynamically set the year in the footer to the current year
+const currentYear = new Date().getFullYear();
+console.log(currentYear)
+document.getElementById("year").textContent = `${currentYear}.`;
+document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
+

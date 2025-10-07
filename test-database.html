@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Test - InspireMe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>InspireMe Database Test Page</h1>
+    <p>This page tests the database functionality. Open your browser's console to see detailed logs.</p>
+    
+    <div class="test-section">
+        <h2>Database Tests</h2>
+        <button onclick="runDatabaseTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Actions</h2>
+        <button onclick="showStats()">Show Database Stats</button>
+        <button onclick="addTestQuote()">Add Test Quote</button>
+        <button onclick="searchQuotes()">Search Quotes</button>
+        <button onclick="showCategories()">Show Categories</button>
+        <div id="actionResults"></div>
+    </div>
+
+    <script type="module">
+        import QuoteDatabase from './database/QuoteDatabase.js';
+        import quotes from './quotes.js';
+
+        // Initialize database
+        const db = new QuoteDatabase();
+        
+        // Import quotes if empty
+        if (db.getAllQuotes().length === 0) {
+            console.log('Importing quotes...');
+            const count = db.importQuotes(quotes);
+            console.log(`Imported ${count} quotes`);
+        }
+
+        // Make database available globally for testing
+        window.testDB = db;
+        window.originalQuotes = quotes;
+
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('testResults') || document.getElementById('actionResults');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        window.addResult = addResult;
+
+        window.runDatabaseTests = function() {
+            clearResults();
+            addResult('Starting database tests...', 'info');
+
+            try {
+                // Test 1: Basic initialization
+                addResult('✅ Database initialized successfully', 'success');
+
+                // Test 2: Quote retrieval
+                const allQuotes = db.getAllQuotes();
+                addResult(`✅ Retrieved ${allQuotes.length} quotes`, 'success');
+
+                // Test 3: Categories
+                const categories = db.getAllCategories();
+                addResult(`✅ Found ${categories.length} categories: ${categories.join(', ')}`, 'success');
+
+                // Test 4: Search functionality
+                const searchResults = db.searchQuotes('motivation');
+                addResult(`✅ Search for 'motivation' returned ${searchResults.length} results`, 'success');
+
+                // Test 5: Add quote
+                const testQuote = db.addQuote(
+                    'This is a test quote for database functionality.',
+                    'Test Author',
+                    'Testing',
+                    ['test', 'database']
+                );
+                addResult(`✅ Added test quote with ID: ${testQuote.id}`, 'success');
+
+                // Test 6: Update quote
+                const updatedQuote = db.updateQuote(testQuote.id, { likes: 5 });
+                addResult(`✅ Updated quote likes to ${updatedQuote.likes}`, 'success');
+
+                // Test 7: Toggle favorite
+                const favoriteQuote = db.toggleFavorite(testQuote.id);
+                addResult(`✅ Toggled favorite status: ${favoriteQuote.isFavorite}`, 'success');
+
+                // Test 8: Category filtering
+                const testingQuotes = db.getQuotesByCategory('Testing');
+                addResult(`✅ Found ${testingQuotes.length} quotes in 'Testing' category`, 'success');
+
+                // Test 9: Statistics
+                const stats = db.getStats();
+                addResult(`✅ Database stats: ${stats.totalQuotes} quotes, ${stats.totalCategories} categories`, 'success');
+
+                // Test 10: Delete test quote
+                const deletedQuote = db.deleteQuote(testQuote.id);
+                addResult(`✅ Deleted test quote: "${deletedQuote.text.substring(0, 30)}..."`, 'success');
+
+                addResult('🎉 All tests completed successfully!', 'success');
+
+            } catch (error) {
+                addResult(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Test error:', error);
+            }
+        };
+
+        window.clearResults = function() {
+            const results = document.getElementById('testResults');
+            if (results) results.innerHTML = '';
+            const actionResults = document.getElementById('actionResults');
+            if (actionResults) actionResults.innerHTML = '';
+        };
+
+        window.showStats = function() {
+            const results = document.getElementById('actionResults');
+            results.innerHTML = '';
+            const stats = db.getStats();
+            addResult(`Database Statistics:`, 'info');
+            addResult(`📊 Total Quotes: ${stats.totalQuotes}`, 'info');
+            addResult(`📂 Categories: ${stats.totalCategories}`, 'info');
+            addResult(`⭐ Favorites: ${stats.totalFavorites}`, 'info');
+            addResult(`👁️ Total Views: ${stats.totalViews}`, 'info');
+            addResult(`❤️ Total Likes: ${stats.totalLikes}`, 'info');
+            addResult(`📅 Last Updated: ${new Date(stats.lastUpdated).toLocaleString()}`, 'info');
+        };
+
+        window.addTestQuote = function() {
+            const results = document.getElementById('actionResults');
+            results.innerHTML = '';
+            try {
+                const newQuote = db.addQuote(
+                    `Test quote added at ${new Date().toLocaleTimeString()}`,
+                    'Test User',
+                    'Manual Test',
+                    ['test', 'manual']
+                );
+                addResult(`✅ Added quote with ID: ${newQuote.id}`, 'success');
+                addResult(`📝 Text: "${newQuote.text}"`, 'info');
+            } catch (error) {
+                addResult(`❌ Error adding quote: ${error.message}`, 'error');
+            }
+        };
+
+        window.searchQuotes = function() {
+            const results = document.getElementById('actionResults');
+            results.innerHTML = '';
+            const searchTerm = prompt('Enter search term:') || 'success';
+            const searchResults = db.searchQuotes(searchTerm);
+            addResult(`🔍 Search results for "${searchTerm}": ${searchResults.length} quotes found`, 'info');
+            searchResults.slice(0, 3).forEach((quote, index) => {
+                addResult(`${index + 1}. "${quote.text.substring(0, 50)}..." - ${quote.author}`, 'info');
+            });
+        };
+
+        window.showCategories = function() {
+            const results = document.getElementById('actionResults');
+            results.innerHTML = '';
+            const categories = db.getAllCategories();
+            addResult(`📂 Categories (${categories.length}):`, 'info');
+            categories.forEach(category => {
+                const count = db.getQuotesByCategory(category).length;
+                addResult(`• ${category}: ${count} quotes`, 'info');
+            });
+        };
+
+        // Auto-run basic test on load
+        setTimeout(() => {
+            addResult('Database loaded and ready for testing!', 'success');
+            addResult(`Current database contains ${db.getAllQuotes().length} quotes`, 'info');
+        }, 100);
+    </script>
+</body>
+</html>
