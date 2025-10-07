@@ -20,19 +20,14 @@ categories.forEach((category) => {
 let lastDisplayedIndex = -1; // Track last displayed quote's index
 
 function displayQuotes(filteredQuotes) {
-  // Handle empty category
-  if (filteredQuotes.length === 0) {
-    text.textContent = "No quotes available for this category.";
-    author.textContent= "";
-    return; // Stop execution here
-    }
+  if (filteredQuotes.length === 0) return; // Handle empty category
 
   // If only one quote exists, just display it without looping
   if (filteredQuotes.length === 1) {
     lastDisplayedIndex = 0;
-    text.textContent = `${filteredQuotes[0].text}`;
-    author.textContent = `${filteredQuotes[0].author}`;
-    return; // Stop execution here    
+    text.innerText = `${filteredQuotes[0].text}`;
+    author.innerText = `${filteredQuotes[0].author}`;
+    return; // Stop execution here
   }
 
   let newIndex; // store the index of the new random quote
@@ -45,8 +40,8 @@ function displayQuotes(filteredQuotes) {
   lastDisplayedIndex = newIndex;
    
   const randomQuote = filteredQuotes[newIndex];
-  text.textContent = `${randomQuote.text}`;
-  author.textContent = `${randomQuote.author}`;
+  text.innerText = `${randomQuote.text}`;
+  author.innerText = `${randomQuote.author}`;
 }
 
 //function to get quotes based on selected category
@@ -68,11 +63,5 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
-
-displayQuotes(quotes); //Initial display (show any random quote)
-
-// Set the current year in the footer; this will dynamically set the year in the footer to the current year
-const currentYear = new Date().getFullYear();
-console.log(currentYear)
-document.getElementById("year").textContent = `${currentYear}.`;
-document.getElementById("sr-year").textContent = `Copyright © ${currentYear}`
+//Initial display (show any andom quote)
+displayQuotes(quotes);

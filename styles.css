@@ -261,11 +261,6 @@ header {
   outline-offset: 2px;
 }
 
-
-.btn:active {
-  background-color: #f08080;
-}
-
 .btn:focus-visible {
   outline: 2px solid #764ba2;
   outline-offset: 3px;
