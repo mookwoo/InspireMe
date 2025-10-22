@@ -1,4 +1,4 @@
-import supabase from "./supabase-client";
+import supabase from "./supabase-client.js";
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
