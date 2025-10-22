@@ -112,7 +112,7 @@ async function init() {
   categories = await fetchCategories();
 
   populateDropdown(categories);
-  displayQuotes;
+  displayQuotes(quotes);
 }
 
 init();
