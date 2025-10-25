@@ -16,32 +16,37 @@ let lastDisplayedIndex = -1; // Track last displayed quote's index
 async function fetchQuotes() {
   const { data, error } = await supabase
     .from("quotes")
-    .select("id, text, author, category_id, categories(name)");
+    .select("id, text, author, category");
 
   if (error) {
     console.error("Error fetching quotes:", error);
     return [];
   }
 
-  // flatten and clean the data
+  // Return the data directly since category is now stored as text
   return data.map((q) => ({
     id: q.id,
     text: q.text,
     author: q.author,
-    category: q.categories?.name || "Uncategorized",
+    category: q.category || "Uncategorized",
   }));
 }
 
 // fetch categories from Supabase
 async function fetchCategories() {
-  const { data, error } = await supabase.from("categories").select("*");
+  const { data, error } = await supabase
+    .from("quotes")
+    .select("category")
+    .neq("category", null);
 
   if (error) {
     console.error("Error fetching categories:", error);
     return [];
   }
 
-  return data.map((c) => c.name); // return only category names
+  // Get unique categories
+  const uniqueCategories = [...new Set(data.map(q => q.category))];
+  return uniqueCategories.filter(cat => cat && cat.trim() !== "");
 }
 
 // populating the dropdown with categories
