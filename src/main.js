@@ -44,7 +44,8 @@ async function fetchQuotes() {
   try {
     const { data, error } = await supabase
       .from("quotes")
-      .select("id, text, author, category");
+      .select("id, text, author, category")
+      .eq("status", "approved"); // Only show approved quotes
 
     if (error) throw error;
 
@@ -70,11 +71,11 @@ async function fetchCategories() {
     const uniqueCategories = [...new Set(MOCK_QUOTES.map(q => q.category))];
     return uniqueCategories.filter(cat => cat && cat.trim() !== "");
   }
-
   try {
     const { data, error } = await supabase
       .from("quotes")
       .select("category")
+      .eq("status", "approved") // Only get categories from approved quotes
       .neq("category", null);
 
     if (error) throw error;
