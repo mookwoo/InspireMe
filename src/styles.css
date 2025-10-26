@@ -71,6 +71,34 @@ body::before {
 header {
   text-align: center;
   width: 100%;
+  position: relative;
+}
+
+.admin-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  color: #667eea;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.admin-link svg {
+  width: 24px;
+  height: 24px;
 }
 
 .heading {
@@ -634,6 +662,16 @@ footer nav a {
 
   .modal-header h2 {
     font-size: 2rem;
+  }
+
+  .admin-link {
+    width: 36px;
+    height: 36px;
+  }
+
+  .admin-link svg {
+    width: 20px;
+    height: 20px;
   }
 }
 

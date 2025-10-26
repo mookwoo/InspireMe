@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel - InspireMe</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- css file -->
+    <link rel="stylesheet" href="/src/admin.css" />
+  </head>
+
+  <body>
+    <div class="admin-container">
+      <header class="admin-header">
+        <h1>✨ InspireMe Admin Panel</h1>
+        <a href="/" class="back-link">← Back to App</a>
+      </header>
+
+      <section class="stats-section">
+        <h2>Moderation Statistics</h2>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-number" id="pendingCount">-</div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="approvedCount">-</div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="rejectedCount">-</div>
+            <div class="stat-label">Rejected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="totalCount">-</div>
+            <div class="stat-label">Total Quotes</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="quotes-section">
+        <h2>Pending Quotes for Review</h2>
+        <div id="pendingQuotes" class="quotes-list">
+          <p class="loading">Loading pending quotes...</p>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>

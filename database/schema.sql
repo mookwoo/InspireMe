@@ -18,7 +18,12 @@ CREATE TABLE IF NOT EXISTS quotes (
   is_favorite BOOLEAN DEFAULT FALSE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- Moderation fields
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  rejection_reason TEXT
 );
 
 -- Create categories table for better normalization (optional)
@@ -59,7 +64,7 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 -- Policy: Users can view all quotes (public read access)
 CREATE POLICY "Public quotes are viewable by everyone" 
   ON quotes FOR SELECT 
-  USING (true);
+  USING (status = 'approved');
 
 -- Policy: Authenticated users can insert quotes
 CREATE POLICY "Authenticated users can insert quotes" 
@@ -159,9 +164,72 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ===== Admin/Moderation Functions =====
+
+-- Function to get pending quotes for review
+CREATE OR REPLACE FUNCTION get_pending_quotes()
+RETURNS TABLE(
+  id BIGINT,
+  text TEXT,
+  author TEXT,
+  category TEXT,
+  created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT q.id, q.text, q.author, q.category, q.created_at
+  FROM quotes q
+  WHERE q.status = 'pending'
+  ORDER BY q.created_at ASC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to approve a quote
+CREATE OR REPLACE FUNCTION approve_quote(quote_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE quotes
+  SET status = 'approved',
+      reviewed_at = NOW(),
+      reviewed_by = auth.uid()
+  WHERE id = quote_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to reject a quote
+CREATE OR REPLACE FUNCTION reject_quote(quote_id BIGINT, reason TEXT DEFAULT NULL)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE quotes
+  SET status = 'rejected',
+      reviewed_at = NOW(),
+      reviewed_by = auth.uid(),
+      rejection_reason = reason
+  WHERE id = quote_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get moderation statistics
+CREATE OR REPLACE FUNCTION get_moderation_stats()
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'pending', (SELECT COUNT(*) FROM quotes WHERE status = 'pending'),
+    'approved', (SELECT COUNT(*) FROM quotes WHERE status = 'approved'),
+    'rejected', (SELECT COUNT(*) FROM quotes WHERE status = 'rejected'),
+    'total', (SELECT COUNT(*) FROM quotes)
+  ) INTO result;
+  
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Insert some sample data (optional - remove if you don't want sample data)
-INSERT INTO quotes (text, author, category, tags) VALUES 
-  ('The only way to do great work is to love what you do.', 'Steve Jobs', 'Motivation', ARRAY['work', 'passion', 'success']),
-  ('Innovation distinguishes between a leader and a follower.', 'Steve Jobs', 'Innovation', ARRAY['leadership', 'innovation', 'business']),
-  ('Life is what happens to you while you''re busy making other plans.', 'John Lennon', 'Life', ARRAY['life', 'planning', 'wisdom'])
+-- Note: Sample quotes are pre-approved
+INSERT INTO quotes (text, author, category, tags, status) VALUES 
+  ('The only way to do great work is to love what you do.', 'Steve Jobs', 'Motivation', ARRAY['work', 'passion', 'success'], 'approved'),
+  ('Innovation distinguishes between a leader and a follower.', 'Steve Jobs', 'Innovation', ARRAY['leadership', 'innovation', 'business'], 'approved'),
+  ('Life is what happens to you while you''re busy making other plans.', 'John Lennon', 'Life', ARRAY['life', 'planning', 'wisdom'], 'approved')
 ON CONFLICT DO NOTHING;
