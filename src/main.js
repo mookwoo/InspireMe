@@ -111,6 +111,113 @@ newQuote.addEventListener("click", function () {
   displayQuotes(filteredQuotes);
 });
 
+// ===== Quote Submission Feature =====
+
+// Modal elements
+const submitModal = document.getElementById("submitModal");
+const submitQuoteBtn = document.getElementById("submitQuoteBtn");
+const closeModalBtn = document.getElementById("closeModal");
+const cancelBtn = document.getElementById("cancelBtn");
+const quoteForm = document.getElementById("quoteForm");
+const submitFeedback = document.getElementById("submitFeedback");
+const quoteTextInput = document.getElementById("quoteTextInput");
+const charCount = document.querySelector(".char-count");
+
+// Open modal
+submitQuoteBtn.addEventListener("click", function () {
+  submitModal.classList.add("show");
+  submitModal.setAttribute("aria-hidden", "false");
+  quoteTextInput.focus();
+});
+
+// Close modal
+function closeModal() {
+  submitModal.classList.remove("show");
+  submitModal.setAttribute("aria-hidden", "true");
+  quoteForm.reset();
+  submitFeedback.classList.add("hidden");
+  charCount.textContent = "0/500";
+}
+
+closeModalBtn.addEventListener("click", closeModal);
+cancelBtn.addEventListener("click", closeModal);
+
+// Close modal when clicking outside
+submitModal.addEventListener("click", function (e) {
+  if (e.target === submitModal) {
+    closeModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && submitModal.classList.contains("show")) {
+    closeModal();
+  }
+});
+
+// Character counter
+quoteTextInput.addEventListener("input", function () {
+  const length = this.value.length;
+  charCount.textContent = `${length}/500`;
+});
+
+// Submit quote
+quoteForm.addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const formData = {
+    text: quoteTextInput.value.trim(),
+    author: document.getElementById("authorInput").value.trim(),
+    category: document.getElementById("categoryInput").value,
+  };
+
+  // Validate
+  if (!formData.text || !formData.author || !formData.category) {
+    showFeedback("Please fill in all required fields.", "error");
+    return;
+  }
+
+  // Show loading state
+  const submitBtn = quoteForm.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting...";
+
+  try {
+    const { data, error } = await supabase.from("quotes").insert([formData]);
+
+    if (error) throw error;
+
+    showFeedback("Quote submitted successfully! Thank you for your contribution.", "success");
+    
+    // Refresh quotes list
+    quotes = await fetchQuotes();
+    categories = await fetchCategories();
+    populateDropdown(categories);
+
+    // Reset form after short delay
+    setTimeout(() => {
+      closeModal();
+    }, 2000);
+  } catch (error) {
+    console.error("Error submitting quote:", error);
+    showFeedback("Failed to submit quote. Please try again.", "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+});
+
+// Show feedback message
+function showFeedback(message, type) {
+  submitFeedback.textContent = message;
+  submitFeedback.className = `feedback ${type}`;
+  submitFeedback.classList.remove("hidden");
+}
+
+// ===== End Quote Submission Feature =====
+
 //Initial display (show any random quote)
 async function init() {
   quotes = await fetchQuotes();
