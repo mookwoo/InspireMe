@@ -12,41 +12,81 @@ let categories = [];
 
 let lastDisplayedIndex = -1; // Track last displayed quote's index
 
-// Fetch quotes from Supabase
-async function fetchQuotes() {
-  const { data, error } = await supabase
-    .from("quotes")
-    .select("id, text, author, category");
+// Mock data for testing without Supabase
+const MOCK_QUOTES = [
+  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation" },
+  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Innovation" },
+  { id: 3, text: "Life is what happens to you while you're busy making other plans.", author: "John Lennon", category: "Life" },
+  { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Inspiration" },
+  { id: 5, text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill", category: "Success" },
+  { id: 6, text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", category: "Motivation" },
+  { id: 7, text: "Happiness is not something ready made. It comes from your own actions.", author: "Dalai Lama", category: "Happiness" },
+  { id: 8, text: "Love all, trust a few, do wrong to none.", author: "William Shakespeare", category: "Wisdom" },
+];
 
-  if (error) {
-    console.error("Error fetching quotes:", error);
-    return [];
-  }
+// Check if Supabase is configured
+const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
 
-  // Return the data directly since category is now stored as text
-  return data.map((q) => ({
-    id: q.id,
-    text: q.text,
-    author: q.author,
-    category: q.category || "Uncategorized",
-  }));
+if (useMockData) {
+  console.log("🎭 Running in MOCK MODE - No Supabase configuration found");
+  console.log("To use real database, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env file");
 }
 
-// fetch categories from Supabase
-async function fetchCategories() {
-  const { data, error } = await supabase
-    .from("quotes")
-    .select("category")
-    .neq("category", null);
-
-  if (error) {
-    console.error("Error fetching categories:", error);
-    return [];
+// Fetch quotes from Supabase (with fallback to mock data)
+async function fetchQuotes() {
+  // If using mock data or supabase not configured, return immediately
+  if (useMockData || !supabase) {
+    console.log("Using mock data for testing");
+    return [...MOCK_QUOTES];
   }
 
-  // Get unique categories
-  const uniqueCategories = [...new Set(data.map(q => q.category))];
-  return uniqueCategories.filter(cat => cat && cat.trim() !== "");
+  try {
+    const { data, error } = await supabase
+      .from("quotes")
+      .select("id, text, author, category");
+
+    if (error) throw error;
+
+    // Return the data directly since category is now stored as text
+    return data.map((q) => ({
+      id: q.id,
+      text: q.text,
+      author: q.author,
+      category: q.category || "Uncategorized",
+    }));
+  } catch (error) {
+    console.error("Error fetching quotes:", error);
+    console.log("Falling back to mock data");
+    useMockData = true; // Switch to mock data on error
+    return [...MOCK_QUOTES];
+  }
+}
+
+// fetch categories from Supabase (with fallback to mock data)
+async function fetchCategories() {
+  // If using mock data or supabase not configured, return categories from mock quotes
+  if (useMockData || !supabase) {
+    const uniqueCategories = [...new Set(MOCK_QUOTES.map(q => q.category))];
+    return uniqueCategories.filter(cat => cat && cat.trim() !== "");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("quotes")
+      .select("category")
+      .neq("category", null);
+
+    if (error) throw error;
+
+    // Get unique categories
+    const uniqueCategories = [...new Set(data.map(q => q.category))];
+    return uniqueCategories.filter(cat => cat && cat.trim() !== "");
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    const uniqueCategories = [...new Set(MOCK_QUOTES.map(q => q.category))];
+    return uniqueCategories.filter(cat => cat && cat.trim() !== "");
+  }
 }
 
 // populating the dropdown with categories
@@ -79,11 +119,14 @@ function displayQuotes(filteredQuotes) {
   }
 
   let newIndex; // store the index of the new random quote
+  let attempts = 0;
+  const maxAttempts = 50; // Prevent infinite loop
 
   // Ensure we get a new quote every time
   do {
     newIndex = Math.floor(Math.random() * filteredQuotes.length);
-  } while (newIndex === lastDisplayedIndex && filteredQuotes.length > 1);
+    attempts++;
+  } while (newIndex === lastDisplayedIndex && filteredQuotes.length > 1 && attempts < maxAttempts);
 
   lastDisplayedIndex = newIndex;
 
@@ -102,6 +145,7 @@ function getFilteredQuotes() {
 
 // Event listener for category selection
 categoryFilter.addEventListener("change", function () {
+  lastDisplayedIndex = -1; // Reset when category changes
   const filteredQuotes = getFilteredQuotes();
   displayQuotes(filteredQuotes);
 });
@@ -185,21 +229,47 @@ quoteForm.addEventListener("submit", async function (e) {
   submitBtn.textContent = "Submitting...";
 
   try {
-    const { data, error } = await supabase.from("quotes").insert([formData]);
+    // If using mock data, simulate submission
+    if (useMockData) {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Add quote to mock data
+      const newQuote = {
+        id: MOCK_QUOTES.length + 1,
+        ...formData
+      };
+      MOCK_QUOTES.push(newQuote);
+      
+      showFeedback("Quote submitted successfully! (Mock mode - not saved to database)", "success");
+      
+      // Refresh quotes list
+      quotes = await fetchQuotes();
+      categories = await fetchCategories();
+      populateDropdown(categories);
+      
+      // Reset form after short delay
+      setTimeout(() => {
+        closeModal();
+      }, 2000);
+    } else {
+      // Real Supabase submission
+      const { data, error } = await supabase.from("quotes").insert([formData]);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    showFeedback("Quote submitted successfully! Thank you for your contribution.", "success");
-    
-    // Refresh quotes list
-    quotes = await fetchQuotes();
-    categories = await fetchCategories();
-    populateDropdown(categories);
+      showFeedback("Quote submitted successfully! Thank you for your contribution.", "success");
+      
+      // Refresh quotes list
+      quotes = await fetchQuotes();
+      categories = await fetchCategories();
+      populateDropdown(categories);
 
-    // Reset form after short delay
-    setTimeout(() => {
-      closeModal();
-    }, 2000);
+      // Reset form after short delay
+      setTimeout(() => {
+        closeModal();
+      }, 2000);
+    }
   } catch (error) {
     console.error("Error submitting quote:", error);
     showFeedback("Failed to submit quote. Please try again.", "error");
@@ -225,6 +295,12 @@ async function init() {
 
   populateDropdown(categories);
   displayQuotes(quotes);
+  
+  // Set copyright year
+  const yearElement = document.getElementById('year');
+  if (yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+  }
 }
 
 init();
