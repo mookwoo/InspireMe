@@ -2,18 +2,31 @@ import supabase from "./supabase-client.js";
 
 // Mock data for testing without Supabase
 const MOCK_ALL_QUOTES = [
+  // Pending quotes
   { id: 101, text: "Be yourself; everyone else is already taken.", author: "Oscar Wilde", category: "Wisdom", created_at: new Date().toISOString(), status: "pending" },
-  { id: 102, text: "Two things are infinite: the universe and human stupidity.", author: "Albert Einstein", category: "Humor", created_at: new Date().toISOString(), status: "pending" },
-  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation", created_at: new Date(Date.now() - 86400000).toISOString(), status: "approved" },
-  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Innovation", created_at: new Date(Date.now() - 172800000).toISOString(), status: "approved" },
-  { id: 103, text: "This is a test quote.", author: "Test Author", category: "Test", created_at: new Date(Date.now() - 259200000).toISOString(), status: "rejected" },
+  { id: 102, text: "Two things are infinite: the universe and human stupidity.", author: "Albert Einstein", category: "Humor", created_at: new Date(Date.now() - 3600000).toISOString(), status: "pending" },
+  { id: 103, text: "The journey of a thousand miles begins with one step.", author: "Lao Tzu", category: "Motivation", created_at: new Date(Date.now() - 7200000).toISOString(), status: "pending" },
+  { id: 104, text: "Life is really simple, but we insist on making it complicated.", author: "Confucius", category: "Life", created_at: new Date(Date.now() - 10800000).toISOString(), status: "pending" },
+  
+  // Approved quotes
+  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation", created_at: new Date(Date.now() - 86400000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 43200000).toISOString() },
+  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Innovation", created_at: new Date(Date.now() - 172800000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 129600000).toISOString() },
+  { id: 3, text: "Life is what happens to you while you're busy making other plans.", author: "John Lennon", category: "Life", created_at: new Date(Date.now() - 259200000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 216000000).toISOString() },
+  { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Inspiration", created_at: new Date(Date.now() - 345600000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 302400000).toISOString() },
+  { id: 5, text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill", category: "Success", created_at: new Date(Date.now() - 432000000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 388800000).toISOString() },
+  { id: 6, text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", category: "Motivation", created_at: new Date(Date.now() - 518400000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 475200000).toISOString() },
+  
+  // Rejected quotes
+  { id: 105, text: "This is a test quote.", author: "Test Author", category: "Test", created_at: new Date(Date.now() - 604800000).toISOString(), status: "rejected", reviewed_at: new Date(Date.now() - 561600000).toISOString(), rejection_reason: "Not inspirational enough" },
+  { id: 106, text: "Spam content here.", author: "Spammer", category: "Spam", created_at: new Date(Date.now() - 691200000).toISOString(), status: "rejected", reviewed_at: new Date(Date.now() - 648000000).toISOString(), rejection_reason: "Inappropriate content" },
+  { id: 107, text: "Buy now for 50% off!", author: "Marketing Bot", category: "Sales", created_at: new Date(Date.now() - 777600000).toISOString(), status: "rejected", reviewed_at: new Date(Date.now() - 734400000).toISOString(), rejection_reason: "Commercial spam" },
 ];
 
 const MOCK_STATS = {
-  pending: 2,
-  approved: 8,
-  rejected: 1,
-  total: 11
+  pending: 4,
+  approved: 6,
+  rejected: 3,
+  total: 13
 };
 
 // Check if Supabase is configured
@@ -58,6 +71,10 @@ async function loadQuotes(status = 'pending') {
   const container = document.getElementById('quotesContainer');
   currentFilter = status;
   
+  console.log('Loading quotes with status:', status);
+  console.log('useMockData:', useMockData);
+  console.log('MOCK_ALL_QUOTES length:', MOCK_ALL_QUOTES.length);
+  
   try {
     let quotes;
     
@@ -66,6 +83,9 @@ async function loadQuotes(status = 'pending') {
       quotes = status === 'all' 
         ? MOCK_ALL_QUOTES 
         : MOCK_ALL_QUOTES.filter(q => q.status === status);
+      
+      console.log('Filtered quotes:', quotes.length);
+      console.log('Quotes:', quotes);
     } else {
       // Fetch from Supabase
       let query = supabase
@@ -217,8 +237,134 @@ document.addEventListener('DOMContentLoaded', function() {
       loadQuotes(status);
     });
   });
-});
 
-// Initialize
-loadStats();
-loadQuotes('pending');
+  // Add Quote Modal handlers
+  const addQuoteModal = document.getElementById('addQuoteModal');
+  const addQuoteBtn = document.getElementById('addQuoteBtn');
+  const closeAddModal = document.getElementById('closeAddModal');
+  const cancelAddBtn = document.getElementById('cancelAddBtn');
+  const addQuoteForm = document.getElementById('addQuoteForm');
+  const adminQuoteText = document.getElementById('adminQuoteText');
+  const charCount = document.querySelector('#addQuoteModal .char-count');
+  const addQuoteFeedback = document.getElementById('addQuoteFeedback');
+
+  // Open add quote modal
+  addQuoteBtn.addEventListener('click', function() {
+    addQuoteModal.classList.add('show');
+    addQuoteModal.setAttribute('aria-hidden', 'false');
+    adminQuoteText.focus();
+  });
+
+  // Close modal function
+  function closeAddQuoteModal() {
+    addQuoteModal.classList.remove('show');
+    addQuoteModal.setAttribute('aria-hidden', 'true');
+    addQuoteForm.reset();
+    addQuoteFeedback.classList.add('hidden');
+    charCount.textContent = '0/500';
+  }
+
+  closeAddModal.addEventListener('click', closeAddQuoteModal);
+  cancelAddBtn.addEventListener('click', closeAddQuoteModal);
+
+  // Close on outside click
+  addQuoteModal.addEventListener('click', function(e) {
+    if (e.target === addQuoteModal) {
+      closeAddQuoteModal();
+    }
+  });
+
+  // Close with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && addQuoteModal.classList.contains('show')) {
+      closeAddQuoteModal();
+    }
+  });
+
+  // Character counter
+  adminQuoteText.addEventListener('input', function() {
+    const length = this.value.length;
+    charCount.textContent = `${length}/500`;
+  });
+
+  // Submit new quote
+  addQuoteForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = {
+      text: adminQuoteText.value.trim(),
+      author: document.getElementById('adminAuthor').value.trim(),
+      category: document.getElementById('adminCategory').value,
+      status: document.getElementById('adminStatus').value,
+    };
+
+    // Validate
+    if (!formData.text || !formData.author || !formData.category || !formData.status) {
+      showAddQuoteFeedback('Please fill in all required fields.', 'error');
+      return;
+    }
+
+    // Show loading state
+    const submitBtn = addQuoteForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Adding...';
+
+    try {
+      if (useMockData || !supabase) {
+        // Mock mode - add to mock data
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const newQuote = {
+          id: MOCK_ALL_QUOTES.length + 100,
+          ...formData,
+          created_at: new Date().toISOString(),
+          reviewed_at: formData.status === 'approved' ? new Date().toISOString() : null,
+        };
+        MOCK_ALL_QUOTES.unshift(newQuote);
+        
+        showAddQuoteFeedback('Quote added successfully! (Mock mode)', 'success');
+        
+        // Refresh stats and quotes
+        loadStats();
+        loadQuotes(currentFilter);
+        
+        setTimeout(() => {
+          closeAddQuoteModal();
+        }, 1500);
+      } else {
+        // Real Supabase insertion
+        const { data, error } = await supabase.from('quotes').insert([formData]);
+
+        if (error) throw error;
+
+        showAddQuoteFeedback('Quote added successfully!', 'success');
+        
+        // Refresh stats and quotes
+        loadStats();
+        loadQuotes(currentFilter);
+
+        setTimeout(() => {
+          closeAddQuoteModal();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Error adding quote:', error);
+      showAddQuoteFeedback('Failed to add quote. Please try again.', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+
+  // Show feedback in modal
+  function showAddQuoteFeedback(message, type) {
+    addQuoteFeedback.textContent = message;
+    addQuoteFeedback.className = `feedback ${type}`;
+    addQuoteFeedback.classList.remove('hidden');
+  }
+
+  // Initialize - load data after DOM is ready
+  loadStats();
+  loadQuotes('pending');
+});

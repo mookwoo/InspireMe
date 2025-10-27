@@ -22,7 +22,10 @@
     <div class="admin-container">
       <header class="admin-header">
         <h1>✨ InspireMe Admin Panel</h1>
-        <a href="/" class="back-link">← Back to App</a>
+        <div class="header-actions">
+          <button id="addQuoteBtn" class="btn btn-primary">+ Add New Quote</button>
+          <a href="/" class="back-link">← Back to App</a>
+        </div>
       </header>
 
       <section class="stats-section">
@@ -63,6 +66,77 @@
       </section>
     </div>
 
+    <!-- Add Quote Modal -->
+    <div id="addQuoteModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add New Quote</h2>
+          <button class="close-btn" id="closeAddModal" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="addQuoteForm">
+          <div class="form-group">
+            <label for="adminQuoteText">Quote Text *</label>
+            <textarea 
+              id="adminQuoteText" 
+              name="text" 
+              required 
+              maxlength="500"
+              rows="4"
+              placeholder="Enter the quote text..."
+            ></textarea>
+            <span class="char-count">0/500</span>
+          </div>
+
+          <div class="form-group">
+            <label for="adminAuthor">Author *</label>
+            <input 
+              type="text" 
+              id="adminAuthor" 
+              name="author" 
+              required 
+              maxlength="100"
+              placeholder="e.g., Albert Einstein"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="adminCategory">Category *</label>
+            <select id="adminCategory" name="category" required>
+              <option value="">Select a category</option>
+              <option value="Motivation">Motivation</option>
+              <option value="Inspiration">Inspiration</option>
+              <option value="Success">Success</option>
+              <option value="Life">Life</option>
+              <option value="Wisdom">Wisdom</option>
+              <option value="Happiness">Happiness</option>
+              <option value="Love">Love</option>
+              <option value="Innovation">Innovation</option>
+              <option value="Leadership">Leadership</option>
+              <option value="Humor">Humor</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="adminStatus">Status *</label>
+            <select id="adminStatus" name="status" required>
+              <option value="approved">Approved (publish immediately)</option>
+              <option value="pending">Pending (requires review)</option>
+            </select>
+          </div>
+
+          <div class="feedback hidden" id="addQuoteFeedback"></div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Quote</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>
     <script type="module" src="/src/admin.js"></script>
   </body>
 </html>
