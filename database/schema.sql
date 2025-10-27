@@ -39,6 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_quotes_author ON quotes(author);
 CREATE INDEX IF NOT EXISTS idx_quotes_user_id ON quotes(user_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_date_added ON quotes(date_added);
 CREATE INDEX IF NOT EXISTS idx_quotes_is_favorite ON quotes(is_favorite);
+CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
 CREATE INDEX IF NOT EXISTS idx_quotes_text_search ON quotes USING gin(to_tsvector('english', text || ' ' || author));
 
 -- Create updated_at trigger function
@@ -66,10 +67,10 @@ CREATE POLICY "Public quotes are viewable by everyone"
   ON quotes FOR SELECT 
   USING (status = 'approved');
 
--- Policy: Authenticated users can insert quotes
-CREATE POLICY "Authenticated users can insert quotes" 
+-- Policy: Allow public quote submissions (anonymous or authenticated)
+CREATE POLICY "Anyone can insert quotes" 
   ON quotes FOR INSERT 
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (true);
 
 -- Policy: Users can update their own quotes
 CREATE POLICY "Users can update own quotes" 
@@ -165,6 +166,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ===== Admin/Moderation Functions =====
+
+-- Note: For admin access to work, you'll need to:
+-- 1. Create a custom claim or role for admin users in Supabase Auth
+-- 2. OR use service role key (not recommended for client-side)
+-- 3. OR temporarily disable RLS for testing (not recommended for production)
+-- 
+-- For now, admins should use the Supabase dashboard or service role key
+-- to access all quotes regardless of status.
 
 -- Function to get pending quotes for review
 CREATE OR REPLACE FUNCTION get_pending_quotes()

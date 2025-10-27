@@ -1,9 +1,12 @@
 import supabase from "./supabase-client.js";
 
 // Mock data for testing without Supabase
-const MOCK_PENDING_QUOTES = [
-  { id: 101, text: "Be yourself; everyone else is already taken.", author: "Oscar Wilde", category: "Wisdom", created_at: new Date().toISOString() },
-  { id: 102, text: "Two things are infinite: the universe and human stupidity.", author: "Albert Einstein", category: "Humor", created_at: new Date().toISOString() },
+const MOCK_ALL_QUOTES = [
+  { id: 101, text: "Be yourself; everyone else is already taken.", author: "Oscar Wilde", category: "Wisdom", created_at: new Date().toISOString(), status: "pending" },
+  { id: 102, text: "Two things are infinite: the universe and human stupidity.", author: "Albert Einstein", category: "Humor", created_at: new Date().toISOString(), status: "pending" },
+  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation", created_at: new Date(Date.now() - 86400000).toISOString(), status: "approved" },
+  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Innovation", created_at: new Date(Date.now() - 172800000).toISOString(), status: "approved" },
+  { id: 103, text: "This is a test quote.", author: "Test Author", category: "Test", created_at: new Date(Date.now() - 259200000).toISOString(), status: "rejected" },
 ];
 
 const MOCK_STATS = {
@@ -16,6 +19,9 @@ const MOCK_STATS = {
 // Check if Supabase is configured
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 let useMockData = !hasSupabaseConfig;
+
+// Current filter status
+let currentFilter = 'pending';
 
 if (useMockData) {
   console.log("🎭 Running in MOCK MODE - Admin Panel");
@@ -48,43 +54,70 @@ function displayStats(stats) {
 }
 
 // Load pending quotes
-async function loadPendingQuotes() {
-  const container = document.getElementById('pendingQuotes');
+async function loadQuotes(status = 'pending') {
+  const container = document.getElementById('quotesContainer');
+  currentFilter = status;
   
   try {
-    let pendingQuotes;
+    let quotes;
     
     if (useMockData || !supabase) {
-      pendingQuotes = MOCK_PENDING_QUOTES;
+      // Filter mock data by status
+      quotes = status === 'all' 
+        ? MOCK_ALL_QUOTES 
+        : MOCK_ALL_QUOTES.filter(q => q.status === status);
     } else {
-      const { data, error } = await supabase.rpc('get_pending_quotes');
+      // Fetch from Supabase
+      let query = supabase
+        .from("quotes")
+        .select("id, text, author, category, created_at, status, reviewed_at, rejection_reason")
+        .order('created_at', { ascending: false });
+      
+      // Apply status filter if not 'all'
+      if (status !== 'all') {
+        query = query.eq('status', status);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
-      pendingQuotes = data;
+      quotes = data;
     }
 
-    if (pendingQuotes.length === 0) {
-      container.innerHTML = '<p class="no-quotes">🎉 No pending quotes to review!</p>';
+    if (quotes.length === 0) {
+      container.innerHTML = `<p class="no-quotes">📭 No ${status === 'all' ? '' : status} quotes found.</p>`;
       return;
     }
 
-    container.innerHTML = pendingQuotes.map(quote => `
-      <div class="quote-card" data-id="${quote.id}">
+    container.innerHTML = quotes.map(quote => `
+      <div class="quote-card ${quote.status}" data-id="${quote.id}">
+        <div class="quote-status-badge ${quote.status}">${quote.status}</div>
         <div class="quote-content">
           <p class="quote-text">"${quote.text}"</p>
           <p class="quote-author">— ${quote.author}</p>
-          <p class="quote-meta">Category: ${quote.category} | Submitted: ${new Date(quote.created_at).toLocaleDateString()}</p>
+          <p class="quote-meta">
+            Category: ${quote.category} | 
+            Submitted: ${new Date(quote.created_at).toLocaleDateString()}
+            ${quote.reviewed_at ? `| Reviewed: ${new Date(quote.reviewed_at).toLocaleDateString()}` : ''}
+          </p>
+          ${quote.rejection_reason ? `<p class="rejection-reason">Rejection reason: ${quote.rejection_reason}</p>` : ''}
         </div>
         <div class="quote-actions">
-          <button class="btn btn-approve" onclick="approveQuote(${quote.id})">✓ Approve</button>
-          <button class="btn btn-reject" onclick="rejectQuote(${quote.id})">✗ Reject</button>
+          ${quote.status === 'pending' ? `
+            <button class="btn btn-approve" onclick="approveQuote(${quote.id})">✓ Approve</button>
+            <button class="btn btn-reject" onclick="rejectQuote(${quote.id})">✗ Reject</button>
+          ` : quote.status === 'rejected' ? `
+            <button class="btn btn-approve" onclick="approveQuote(${quote.id})">✓ Approve</button>
+          ` : `
+            <button class="btn btn-reject" onclick="rejectQuote(${quote.id})">✗ Reject</button>
+          `}
         </div>
       </div>
     `).join('');
   } catch (error) {
-    console.error("Error loading pending quotes:", error);
-    container.innerHTML = '<p class="error">Failed to load pending quotes.</p>';
+    console.error("Error loading quotes:", error);
+    container.innerHTML = '<p class="error">Failed to load quotes.</p>';
   }
 }
 
@@ -92,17 +125,16 @@ async function loadPendingQuotes() {
 window.approveQuote = async function(quoteId) {
   try {
     if (useMockData || !supabase) {
-      // Mock mode - just remove from list
-      const card = document.querySelector(`[data-id="${quoteId}"]`);
-      card.style.opacity = '0.5';
-      setTimeout(() => {
-        card.remove();
-        showToast('Quote approved! (Mock mode - not saved)', 'success');
-        loadStats();
-        if (document.querySelectorAll('.quote-card').length === 0) {
-          loadPendingQuotes();
-        }
-      }, 300);
+      // Mock mode - update mock data
+      const quote = MOCK_ALL_QUOTES.find(q => q.id === quoteId);
+      if (quote) {
+        quote.status = 'approved';
+        quote.reviewed_at = new Date().toISOString();
+      }
+      
+      showToast('Quote approved! (Mock mode - not saved)', 'success');
+      loadStats();
+      loadQuotes(currentFilter);
       return;
     }
 
@@ -112,7 +144,7 @@ window.approveQuote = async function(quoteId) {
     
     showToast('Quote approved successfully!', 'success');
     loadStats();
-    loadPendingQuotes();
+    loadQuotes(currentFilter);
   } catch (error) {
     console.error("Error approving quote:", error);
     showToast('Failed to approve quote', 'error');
@@ -125,17 +157,17 @@ window.rejectQuote = async function(quoteId) {
   
   try {
     if (useMockData || !supabase) {
-      // Mock mode - just remove from list
-      const card = document.querySelector(`[data-id="${quoteId}"]`);
-      card.style.opacity = '0.5';
-      setTimeout(() => {
-        card.remove();
-        showToast('Quote rejected! (Mock mode - not saved)', 'success');
-        loadStats();
-        if (document.querySelectorAll('.quote-card').length === 0) {
-          loadPendingQuotes();
-        }
-      }, 300);
+      // Mock mode - update mock data
+      const quote = MOCK_ALL_QUOTES.find(q => q.id === quoteId);
+      if (quote) {
+        quote.status = 'rejected';
+        quote.reviewed_at = new Date().toISOString();
+        quote.rejection_reason = reason;
+      }
+      
+      showToast('Quote rejected! (Mock mode - not saved)', 'success');
+      loadStats();
+      loadQuotes(currentFilter);
       return;
     }
 
@@ -148,7 +180,7 @@ window.rejectQuote = async function(quoteId) {
     
     showToast('Quote rejected', 'success');
     loadStats();
-    loadPendingQuotes();
+    loadQuotes(currentFilter);
   } catch (error) {
     console.error("Error rejecting quote:", error);
     showToast('Failed to reject quote', 'error');
@@ -170,6 +202,23 @@ function showToast(message, type) {
   }, 3000);
 }
 
+// Tab filtering
+document.addEventListener('DOMContentLoaded', function() {
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Update active state
+      tabBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Load quotes for selected status
+      const status = this.dataset.status;
+      loadQuotes(status);
+    });
+  });
+});
+
 // Initialize
 loadStats();
-loadPendingQuotes();
+loadQuotes('pending');
