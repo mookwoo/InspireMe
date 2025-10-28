@@ -645,7 +645,8 @@ body::before {
   background: rgba(156, 163, 175, 0.3);
 }
 
-#addQuoteModal .char-count {
+#addQuoteModal .char-count,
+#rejectModal .char-count {
   display: block;
   text-align: right;
   font-size: 1.3rem;
@@ -653,26 +654,37 @@ body::before {
   margin-top: 6px;
 }
 
-#addQuoteModal .feedback {
+.help-text {
+  font-size: 1.3rem;
+  color: #6b7280;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+#addQuoteModal .feedback,
+#rejectModal .feedback {
   padding: 14px 18px;
   border-radius: 10px;
   font-size: 1.4rem;
   margin-bottom: 20px;
 }
 
-#addQuoteModal .feedback.success {
+#addQuoteModal .feedback.success,
+#rejectModal .feedback.success {
   background: rgba(16, 185, 129, 0.15);
   color: #059669;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-#addQuoteModal .feedback.error {
+#addQuoteModal .feedback.error,
+#rejectModal .feedback.error {
   background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-#addQuoteModal .feedback.hidden {
+#addQuoteModal .feedback.hidden,
+#rejectModal .feedback.hidden {
   display: none;
 }
 

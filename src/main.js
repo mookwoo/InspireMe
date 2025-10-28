@@ -10,7 +10,7 @@ const author = document.querySelector("#quoteAuthor");
 let quotes = [];
 let categories = [];
 
-let lastDisplayedIndex = -1; // Track last displayed quote's index
+let lastDisplayedQuoteId = null; // Track last displayed quote's ID instead of index
 
 // Mock data for testing without Supabase
 const MOCK_QUOTES = [
@@ -108,30 +108,30 @@ function displayQuotes(filteredQuotes) {
   if (filteredQuotes.length === 0) {
     text.innerText = "No quotes found for this category.";
     author.innerText = "";
+    lastDisplayedQuoteId = null;
     return; // Stop execution here
   }
 
-  // If only one quote exists, just display it without looping
+  // If only one quote exists, just display it
   if (filteredQuotes.length === 1) {
-    lastDisplayedIndex = 0;
+    lastDisplayedQuoteId = filteredQuotes[0].id;
     text.innerText = `${filteredQuotes[0].text}`;
     author.innerText = `${filteredQuotes[0].author}`;
     return; // Stop execution here
   }
 
-  let newIndex; // store the index of the new random quote
+  let randomQuote;
   let attempts = 0;
   const maxAttempts = 50; // Prevent infinite loop
 
-  // Ensure we get a new quote every time
+  // Ensure we get a different quote from the last one displayed
   do {
-    newIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    randomQuote = filteredQuotes[randomIndex];
     attempts++;
-  } while (newIndex === lastDisplayedIndex && filteredQuotes.length > 1 && attempts < maxAttempts);
+  } while (randomQuote.id === lastDisplayedQuoteId && filteredQuotes.length > 1 && attempts < maxAttempts);
 
-  lastDisplayedIndex = newIndex;
-
-  const randomQuote = filteredQuotes[newIndex];
+  lastDisplayedQuoteId = randomQuote.id;
   text.innerText = `${randomQuote.text}`;
   author.innerText = `${randomQuote.author}`;
 }
@@ -146,7 +146,6 @@ function getFilteredQuotes() {
 
 // Event listener for category selection
 categoryFilter.addEventListener("change", function () {
-  lastDisplayedIndex = -1; // Reset when category changes
   const filteredQuotes = getFilteredQuotes();
   displayQuotes(filteredQuotes);
 });

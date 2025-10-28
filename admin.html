@@ -134,9 +134,39 @@
       </div>
     </div>
 
+    <!-- Reject Quote Modal -->
+    <div id="rejectModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="rejectModalTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="rejectModalTitle">Reject Quote</h2>
+          <button class="close-btn" id="closeRejectModal" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="rejectQuoteForm">
+          <div class="form-group">
+            <label for="rejectionReason">Reason for Rejection (Optional)</label>
+            <textarea 
+              id="rejectionReason" 
+              name="reason" 
+              maxlength="500"
+              rows="4"
+              placeholder="Explain why this quote is being rejected..."
+            ></textarea>
+            <span class="char-count">0/500</span>
+            <p class="help-text">Providing a reason helps submitters understand why their quote was rejected.</p>
+          </div>
+
+          <div class="feedback hidden" id="rejectFeedback"></div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelRejectBtn">Cancel</button>
+            <button type="submit" class="btn btn-reject">Reject Quote</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script type="module" src="/src/admin.js"></script>
   </body>
 </html>
-    <script type="module" src="/src/admin.js"></script>
   </body>
 </html>

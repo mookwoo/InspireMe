@@ -237,8 +237,11 @@ $$ LANGUAGE plpgsql;
 
 -- Insert some sample data (optional - remove if you don't want sample data)
 -- Note: Sample quotes are pre-approved
+-- Note: In SQL, apostrophes are escaped by doubling them ('')
 INSERT INTO quotes (text, author, category, tags, status) VALUES 
   ('The only way to do great work is to love what you do.', 'Steve Jobs', 'Motivation', ARRAY['work', 'passion', 'success'], 'approved'),
   ('Innovation distinguishes between a leader and a follower.', 'Steve Jobs', 'Innovation', ARRAY['leadership', 'innovation', 'business'], 'approved'),
-  ('Life is what happens to you while you''re busy making other plans.', 'John Lennon', 'Life', ARRAY['life', 'planning', 'wisdom'], 'approved')
+  ('Life is what happens to you while you''re busy making other plans.', 'John Lennon', 'Life', ARRAY['life', 'planning', 'wisdom'], 'approved'),
+  ('It''s not whether you get knocked down, it''s whether you get up.', 'Vince Lombardi', 'Motivation', ARRAY['resilience', 'perseverance'], 'approved'),
+  ('Don''t watch the clock; do what it does. Keep going.', 'Sam Levenson', 'Success', ARRAY['persistence', 'time'], 'approved')
 ON CONFLICT DO NOTHING;

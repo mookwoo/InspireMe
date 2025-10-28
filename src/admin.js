@@ -111,7 +111,7 @@ async function loadQuotes(status = 'pending') {
     }
 
     container.innerHTML = quotes.map(quote => `
-      <div class="quote-card ${quote.status}" data-id="${quote.id}">
+      <div class="quote-card ${quote.status}" data-quote-id="${quote.id}">
         <div class="quote-status-badge ${quote.status}">${quote.status}</div>
         <div class="quote-content">
           <p class="quote-text">"${quote.text}"</p>
@@ -125,12 +125,12 @@ async function loadQuotes(status = 'pending') {
         </div>
         <div class="quote-actions">
           ${quote.status === 'pending' ? `
-            <button class="btn btn-approve" onclick="approveQuote(${quote.id})">✓ Approve</button>
-            <button class="btn btn-reject" onclick="rejectQuote(${quote.id})">✗ Reject</button>
+            <button class="btn btn-approve" data-action="approve">✓ Approve</button>
+            <button class="btn btn-reject" data-action="reject">✗ Reject</button>
           ` : quote.status === 'rejected' ? `
-            <button class="btn btn-approve" onclick="approveQuote(${quote.id})">✓ Approve</button>
+            <button class="btn btn-approve" data-action="approve">✓ Approve</button>
           ` : `
-            <button class="btn btn-reject" onclick="rejectQuote(${quote.id})">✗ Reject</button>
+            <button class="btn btn-reject" data-action="reject">✗ Reject</button>
           `}
         </div>
       </div>
@@ -142,7 +142,7 @@ async function loadQuotes(status = 'pending') {
 }
 
 // Approve quote
-window.approveQuote = async function(quoteId) {
+async function approveQuote(quoteId) {
   try {
     if (useMockData || !supabase) {
       // Mock mode - update mock data
@@ -169,11 +169,23 @@ window.approveQuote = async function(quoteId) {
     console.error("Error approving quote:", error);
     showToast('Failed to approve quote', 'error');
   }
-};
+}
 
 // Reject quote
-window.rejectQuote = async function(quoteId) {
-  const reason = prompt('Reason for rejection (optional):');
+let pendingRejectQuoteId = null;
+
+function showRejectModal(quoteId) {
+  pendingRejectQuoteId = quoteId;
+  const rejectModal = document.getElementById('rejectModal');
+  const rejectionReason = document.getElementById('rejectionReason');
+  
+  rejectModal.classList.add('show');
+  rejectModal.setAttribute('aria-hidden', 'false');
+  rejectionReason.focus();
+}
+
+async function submitReject(reason) {
+  const quoteId = pendingRejectQuoteId;
   
   try {
     if (useMockData || !supabase) {
@@ -193,7 +205,7 @@ window.rejectQuote = async function(quoteId) {
 
     const { error } = await supabase.rpc('reject_quote', { 
       quote_id: quoteId,
-      reason: reason 
+      reason: reason || null
     });
     
     if (error) throw error;
@@ -205,7 +217,7 @@ window.rejectQuote = async function(quoteId) {
     console.error("Error rejecting quote:", error);
     showToast('Failed to reject quote', 'error');
   }
-};
+}
 
 // Show toast notification
 function showToast(message, type) {
@@ -236,6 +248,99 @@ document.addEventListener('DOMContentLoaded', function() {
       const status = this.dataset.status;
       loadQuotes(status);
     });
+  });
+
+  // Event delegation for approve/reject buttons
+  const quotesContainer = document.getElementById('quotesContainer');
+  quotesContainer.addEventListener('click', function(e) {
+    const button = e.target.closest('button[data-action]');
+    if (!button) return;
+
+    const quoteCard = button.closest('.quote-card');
+    if (!quoteCard) return;
+
+    const quoteId = parseInt(quoteCard.dataset.quoteId, 10);
+    if (isNaN(quoteId)) {
+      console.error('Invalid quote ID');
+      return;
+    }
+
+    const action = button.dataset.action;
+    
+    if (action === 'approve') {
+      approveQuote(quoteId);
+    } else if (action === 'reject') {
+      showRejectModal(quoteId);
+    }
+  });
+
+  // Reject Quote Modal handlers
+  const rejectModal = document.getElementById('rejectModal');
+  const closeRejectModal = document.getElementById('closeRejectModal');
+  const cancelRejectBtn = document.getElementById('cancelRejectBtn');
+  const rejectQuoteForm = document.getElementById('rejectQuoteForm');
+  const rejectionReason = document.getElementById('rejectionReason');
+  const rejectCharCount = document.querySelector('#rejectModal .char-count');
+  const rejectFeedback = document.getElementById('rejectFeedback');
+
+  // Close reject modal function
+  function closeRejectQuoteModal() {
+    rejectModal.classList.remove('show');
+    rejectModal.setAttribute('aria-hidden', 'true');
+    rejectQuoteForm.reset();
+    rejectFeedback.classList.add('hidden');
+    rejectCharCount.textContent = '0/500';
+    pendingRejectQuoteId = null;
+  }
+
+  closeRejectModal.addEventListener('click', closeRejectQuoteModal);
+  cancelRejectBtn.addEventListener('click', closeRejectQuoteModal);
+
+  // Close on outside click
+  rejectModal.addEventListener('click', function(e) {
+    if (e.target === rejectModal) {
+      closeRejectQuoteModal();
+    }
+  });
+
+  // Character counter for rejection reason
+  rejectionReason.addEventListener('input', function() {
+    const length = this.value.length;
+    rejectCharCount.textContent = `${length}/500`;
+  });
+
+  // Submit rejection
+  rejectQuoteForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const reason = rejectionReason.value.trim();
+
+    // Show loading state
+    const submitBtn = rejectQuoteForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Rejecting...';
+
+    try {
+      await submitReject(reason);
+      closeRejectQuoteModal();
+    } catch (error) {
+      console.error('Error in reject form:', error);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+
+  // Update Escape key handler to handle both modals
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (addQuoteModal.classList.contains('show')) {
+        closeAddQuoteModal();
+      } else if (rejectModal.classList.contains('show')) {
+        closeRejectQuoteModal();
+      }
+    }
   });
 
   // Add Quote Modal handlers
@@ -270,13 +375,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Close on outside click
   addQuoteModal.addEventListener('click', function(e) {
     if (e.target === addQuoteModal) {
-      closeAddQuoteModal();
-    }
-  });
-
-  // Close with Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && addQuoteModal.classList.contains('show')) {
       closeAddQuoteModal();
     }
   });
