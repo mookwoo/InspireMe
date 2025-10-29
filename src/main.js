@@ -254,7 +254,7 @@ quoteForm.addEventListener("submit", async function (e) {
       }, 2000);
     } else {
       // Real Supabase submission
-      const { data, error } = await supabase.from("quotes").insert([formData]);
+      const { error } = await supabase.from("quotes").insert([formData]);
 
       if (error) throw error;
 
