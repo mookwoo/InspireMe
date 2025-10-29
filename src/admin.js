@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
       } else {
         // Real Supabase insertion
-        const { data, error } = await supabase.from('quotes').insert([formData]);
+        const { error } = await supabase.from('quotes').insert([formData]);
 
         if (error) throw error;
 
