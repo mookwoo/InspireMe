@@ -68,6 +68,11 @@
             Discover quotes that spark your imagination and fuel your dreams
           </p>
         </div>
+        <a href="/admin.html" class="admin-link" aria-label="Admin Panel" title="Admin Panel">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+        </a>
       </header>
 
       <section class="filter-container">
@@ -82,14 +87,79 @@
           <p class="quote-text" id="quoteText"></p>
           <p class="quote-author" id="quoteAuthor"></p>
         </div>
-        <button
-          class="btn"
-          id="newQuote"
-          aria-label="Get new inspirational quote"
-        >
-          New Quote
-        </button>
+        <div class="button-group">
+          <button
+            class="btn"
+            id="newQuote"
+            aria-label="Get new inspirational quote"
+          >
+            New Quote
+          </button>
+          <button
+            class="btn btn-secondary"
+            id="submitQuoteBtn"
+            aria-label="Submit your own quote"
+          >
+            Submit Quote
+          </button>
+        </div>
       </section>
+
+      <!-- Quote Submission Modal -->
+      <div id="submitModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Submit Your Quote</h2>
+            <button class="close-btn" id="closeModal" aria-label="Close modal">&times;</button>
+          </div>
+          <form id="quoteForm">
+            <div class="form-group">
+              <label for="quoteTextInput">Quote Text *</label>
+              <textarea
+                id="quoteTextInput"
+                name="quoteText"
+                required
+                placeholder="Enter your inspirational quote..."
+                rows="4"
+                maxlength="500"
+              ></textarea>
+              <span class="char-count">0/500</span>
+            </div>
+            <div class="form-group">
+              <label for="authorInput">Author *</label>
+              <input
+                type="text"
+                id="authorInput"
+                name="author"
+                required
+                placeholder="e.g., Maya Angelou"
+                maxlength="100"
+              />
+            </div>
+            <div class="form-group">
+              <label for="categoryInput">Category *</label>
+              <select id="categoryInput" name="category" required>
+                <option value="">Select a category</option>
+                <option value="Motivation">Motivation</option>
+                <option value="Life">Life</option>
+                <option value="Success">Success</option>
+                <option value="Wisdom">Wisdom</option>
+                <option value="Happiness">Happiness</option>
+                <option value="Love">Love</option>
+                <option value="Inspiration">Inspiration</option>
+                <option value="Philosophy">Philosophy</option>
+                <option value="Humor">Humor</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
+              <button type="submit" class="btn btn-submit">Submit Quote</button>
+            </div>
+          </form>
+          <div id="submitFeedback" class="feedback hidden"></div>
+        </div>
+      </div>
 
       <footer>
         <p>
@@ -113,6 +183,7 @@
           <a
             href="https://www.linkedin.com/in/chioma-vera-nkanmuo/"
             target="_blank"
+            rel="noopener noreferrer"
             class="socials"
             aria-label="Connect on Linkedin"
             ><svg
@@ -130,7 +201,8 @@
             href="https://github.com/chiomavera/"
             class="socials"
             target="_blank"
-            aria-label="Veiw Github Profile"
+            rel="noopener noreferrer"
+            aria-label="View Github Profile"
             ><svg
               viewBox="0 0 24 24"
               fill="currentColor"
@@ -145,6 +217,7 @@
           <a
             href="https://twitter.com/nkanmuo_vera"
             target="_blank"
+            rel="noopener noreferrer"
             class="socials"
             aria-label="Follow on X (Twitter)"
             ><svg
