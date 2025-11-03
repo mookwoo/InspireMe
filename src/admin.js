@@ -29,6 +29,44 @@ const MOCK_STATS = {
   total: 13
 };
 
+// Fetch and populate category dropdown for admin add quote form
+async function populateAdminCategoryDropdown() {
+  try {
+    const adminCategory = document.getElementById('adminCategory');
+    if (!adminCategory) return;
+    
+    let categories;
+    
+    if (useMockData || !supabase) {
+      // Get categories from mock data
+      categories = [...new Set(MOCK_ALL_QUOTES.map(q => q.category))];
+    } else {
+      // Fetch from database
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("category")
+        .eq("status", "approved")
+        .neq("category", null);
+      
+      if (error) throw error;
+      categories = [...new Set(data.map(q => q.category))];
+    }
+    
+    // Sort alphabetically
+    const sortedCategories = categories.filter(cat => cat && cat.trim() !== "").sort((a, b) => a.localeCompare(b));
+    
+    // Populate dropdown
+    sortedCategories.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      adminCategory.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Error populating categories:', error);
+  }
+}
+
 // Check if Supabase is configured
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 let useMockData = !hasSupabaseConfig;
@@ -235,7 +273,7 @@ function showToast(message, type) {
 }
 
 // Tab filtering
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   
   tabBtns.forEach(btn => {
@@ -463,6 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Initialize - load data after DOM is ready
-  loadStats();
-  loadQuotes('pending');
+  await loadStats();
+  await loadQuotes('pending');
+  
+  // Populate category dropdown
+  await populateAdminCategoryDropdown();
 });

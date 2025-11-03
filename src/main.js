@@ -225,7 +225,11 @@ async function fetchCategories() {
 function populateDropdown(categories) {
   // Clear existing options except "All"
   categoryFilter.innerHTML = '<option value="all">All Categories</option>';
-  categories.forEach((category) => {
+  
+  // Sort categories alphabetically
+  const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
+  
+  sortedCategories.forEach((category) => {
     let option = document.createElement("option");
     option.value = category;
     option.textContent = category;
@@ -459,7 +463,21 @@ async function init() {
   quotes = await fetchQuotes();
   categories = await fetchCategories();
 
+  // Populate main page category filter
   populateDropdown(categories);
+  
+  // Populate submit form category dropdown
+  const categoryInput = document.getElementById('categoryInput');
+  if (categoryInput) {
+    const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
+    sortedCategories.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      categoryInput.appendChild(option);
+    });
+  }
+  
   displayQuotes(quotes);
   
   // Set copyright year
