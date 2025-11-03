@@ -74,10 +74,16 @@ header {
   position: relative;
 }
 
-.admin-link {
+.header-actions {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  gap: 12px;
+}
+
+.admin-link,
+.favorites-link {
   width: 40px;
   height: 40px;
   display: flex;
@@ -90,10 +96,19 @@ header {
   text-decoration: none;
 }
 
-.admin-link:hover {
+.admin-link:hover,
+.favorites-link:hover {
   background: rgba(255, 255, 255, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.favorites-link svg {
+  stroke: #ef4444;
+}
+
+.favorites-link:hover svg {
+  fill: #ef4444;
 }
 
 .admin-link svg {
@@ -186,6 +201,56 @@ header {
   position: relative;
   overflow: hidden;
   transition: all 0.5s ease;
+}
+
+/* Favorite Button */
+.favorite-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.favorite-btn .heart-icon {
+  width: 28px;
+  height: 28px;
+  stroke: #667eea;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.favorite-btn:hover .heart-icon {
+  transform: scale(1.1);
+  stroke: #764ba2;
+}
+
+.favorite-btn.favorited .heart-icon {
+  fill: #ef4444;
+  stroke: #ef4444;
+  animation: heartBeat 0.5s ease;
+}
+
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  75% {
+    transform: scale(1.15);
+  }
 }
 
 .quote-container::before {

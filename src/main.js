@@ -11,6 +11,118 @@ let quotes = [];
 let categories = [];
 
 let lastDisplayedQuoteId = null; // Track last displayed quote's ID instead of index
+let currentQuoteId = null; // Track currently displayed quote ID for favorites
+
+// ===== USER ID MANAGEMENT =====
+// Generate or retrieve anonymous user ID
+function getUserId() {
+  const storageKey = 'inspireme_user_id';
+  let userId = localStorage.getItem(storageKey);
+  
+  if (!userId) {
+    // Generate new user ID: user_[timestamp]_[random]
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    userId = `user_${timestamp}_${random}`;
+    localStorage.setItem(storageKey, userId);
+    console.log('Created new user ID:', userId);
+  }
+  
+  return userId;
+}
+
+// ===== FAVORITES MANAGEMENT =====
+// Check if a quote is favorited
+async function checkIfFavorited(quoteId) {
+  if (useMockData || !supabase) {
+    // In mock mode, use localStorage
+    const favorites = JSON.parse(localStorage.getItem('mock_favorites') || '[]');
+    return favorites.includes(quoteId);
+  }
+
+  try {
+    const userId = getUserId();
+    const { data, error } = await supabase
+      .rpc('is_quote_favorited', { 
+        p_user_id: userId, 
+        p_quote_id: quoteId 
+      });
+
+    if (error) throw error;
+    return data === true;
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    return false;
+  }
+}
+
+// Toggle favorite status
+async function toggleFavorite(quoteId) {
+  if (useMockData || !supabase) {
+    // Mock mode: use localStorage
+    const favorites = JSON.parse(localStorage.getItem('mock_favorites') || '[]');
+    const index = favorites.indexOf(quoteId);
+    
+    if (index > -1) {
+      favorites.splice(index, 1);
+      console.log('Removed from favorites (mock)');
+    } else {
+      favorites.push(quoteId);
+      console.log('Added to favorites (mock)');
+    }
+    
+    localStorage.setItem('mock_favorites', JSON.stringify(favorites));
+    return index === -1; // Return true if added, false if removed
+  }
+
+  try {
+    const userId = getUserId();
+    const isFavorited = await checkIfFavorited(quoteId);
+
+    if (isFavorited) {
+      // Remove favorite
+      const { error } = await supabase.rpc('remove_favorite', {
+        p_user_id: userId,
+        p_quote_id: quoteId
+      });
+      
+      if (error) throw error;
+      console.log('Removed from favorites');
+      return false;
+    } else {
+      // Add favorite
+      const { error } = await supabase.rpc('add_favorite', {
+        p_user_id: userId,
+        p_quote_id: quoteId
+      });
+      
+      if (error) throw error;
+      console.log('Added to favorites');
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    throw error;
+  }
+}
+
+// Update favorite button UI
+async function updateFavoriteButton(quoteId) {
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  if (!favoriteBtn || !quoteId) return;
+
+  const isFavorited = await checkIfFavorited(quoteId);
+  
+  if (isFavorited) {
+    favoriteBtn.classList.add('favorited');
+    favoriteBtn.setAttribute('aria-label', 'Remove from favorites');
+    favoriteBtn.setAttribute('title', 'Remove from favorites');
+  } else {
+    favoriteBtn.classList.remove('favorited');
+    favoriteBtn.setAttribute('aria-label', 'Add to favorites');
+    favoriteBtn.setAttribute('title', 'Add to favorites');
+  }
+}
 
 // Mock data for testing without Supabase
 const MOCK_QUOTES = [
@@ -109,14 +221,17 @@ function displayQuotes(filteredQuotes) {
     text.innerText = "No quotes found for this category.";
     author.innerText = "";
     lastDisplayedQuoteId = null;
+    currentQuoteId = null;
     return; // Stop execution here
   }
 
   // If only one quote exists, just display it
   if (filteredQuotes.length === 1) {
     lastDisplayedQuoteId = filteredQuotes[0].id;
+    currentQuoteId = filteredQuotes[0].id;
     text.innerText = `${filteredQuotes[0].text}`;
     author.innerText = `${filteredQuotes[0].author}`;
+    updateFavoriteButton(currentQuoteId);
     return; // Stop execution here
   }
 
@@ -132,8 +247,10 @@ function displayQuotes(filteredQuotes) {
   } while (randomQuote.id === lastDisplayedQuoteId && filteredQuotes.length > 1 && attempts < maxAttempts);
 
   lastDisplayedQuoteId = randomQuote.id;
+  currentQuoteId = randomQuote.id;
   text.innerText = `${randomQuote.text}`;
   author.innerText = `${randomQuote.author}`;
+  updateFavoriteButton(currentQuoteId);
 }
 
 //function to get quotes based on selected category
@@ -154,6 +271,37 @@ newQuote.addEventListener("click", function () {
   const filteredQuotes = getFilteredQuotes();
   displayQuotes(filteredQuotes);
 });
+
+// ===== Favorite Button Handler =====
+const favoriteBtn = document.getElementById('favoriteBtn');
+if (favoriteBtn) {
+  favoriteBtn.addEventListener('click', async function() {
+    if (!currentQuoteId) return;
+    
+    try {
+      // Add loading state
+      favoriteBtn.disabled = true;
+      
+      const isNowFavorited = await toggleFavorite(currentQuoteId);
+      
+      // Update UI
+      if (isNowFavorited) {
+        favoriteBtn.classList.add('favorited');
+        favoriteBtn.setAttribute('aria-label', 'Remove from favorites');
+        favoriteBtn.setAttribute('title', 'Remove from favorites');
+      } else {
+        favoriteBtn.classList.remove('favorited');
+        favoriteBtn.setAttribute('aria-label', 'Add to favorites');
+        favoriteBtn.setAttribute('title', 'Add to favorites');
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      alert('Failed to update favorite. Please try again.');
+    } finally {
+      favoriteBtn.disabled = false;
+    }
+  });
+}
 
 // ===== Quote Submission Feature =====
 

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Your favorite quotes from InspireMe" />
+    <title>My Favorites - InspireMe</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/favicon/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/favicon/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/favicon/favicon-16x16.png"
+    />
+    <link rel="icon" href="/favicon/favicon.ico" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- css file -->
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/favorites.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <header>
+        <div>
+          <h1 class="heading">❤️ My Favorites</h1>
+          <p class="description">
+            Your personally curated collection of inspiring quotes
+          </p>
+        </div>
+        <a href="/" class="back-link" aria-label="Back to Home" title="Back to Home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </a>
+      </header>
+
+      <section class="favorites-section">
+        <div id="favoritesContainer" class="favorites-container">
+          <!-- Favorites will be loaded here -->
+        </div>
+        <div id="emptyState" class="empty-state hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="64" height="64">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <h2>No favorites yet</h2>
+          <p>Start adding quotes to your favorites from the home page!</p>
+          <a href="/" class="btn">Browse Quotes</a>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          <span>Copyright &copy; <span id="year"></span></span>
+          <span>Made with <span class="love">❤</span> by
+            <a
+              href="https://verachiomankanmuo.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="name-link"
+              aria-label="Visit my portfolio"
+            >
+              Vera Nkanmuo
+            </a>
+          </span>
+        </p>
+      </footer>
+    </div>
+
+    <!-- JavaScript file -->
+    <script type="module" src="/src/favorites.js"></script>
+  </body>
+</html>
