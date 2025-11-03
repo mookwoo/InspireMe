@@ -42,11 +42,17 @@ async function fetchFavorites() {
 
   try {
     const userId = getUserId();
+    
+    // Try RPC function
     const { data, error } = await supabase.rpc('get_user_favorites', {
       p_user_id: userId
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching favorites:', error);
+      return [];
+    }
+    
     return data || [];
   } catch (error) {
     console.error('Error fetching favorites:', error);
@@ -66,12 +72,16 @@ async function removeFavorite(quoteId) {
 
   try {
     const userId = getUserId();
+    // Try RPC function
     const { error } = await supabase.rpc('remove_favorite', {
       p_user_id: userId,
       p_quote_id: quoteId
     });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('RPC remove_favorite failed:', error);
+      return false;
+    }
     return true;
   } catch (error) {
     console.error('Error removing favorite:', error);
@@ -89,7 +99,7 @@ function renderFavorites(favorites) {
 
   emptyState.classList.add('hidden');
   
-  favoritesContainer.innerHTML = favorites.map(quote => `
+  const html = favorites.map(quote => `
     <div class="favorite-card" data-quote-id="${quote.id}">
       <button 
         class="remove-btn" 
@@ -106,6 +116,8 @@ function renderFavorites(favorites) {
       ${quote.category ? `<span class="quote-category">${quote.category}</span>` : ''}
     </div>
   `).join('');
+  
+  favoritesContainer.innerHTML = html;
 
   // Add event listeners to remove buttons
   document.querySelectorAll('.remove-btn').forEach(btn => {

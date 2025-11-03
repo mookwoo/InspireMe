@@ -168,6 +168,10 @@ CREATE POLICY "Authenticated users can insert categories"
   WITH CHECK (auth.role() = 'authenticated');
 
 -- User Favorites policies (allow anonymous users)
+CREATE POLICY "Users can view own favorites" 
+  ON user_favorites FOR SELECT 
+  USING (true);
+
 CREATE POLICY "Users can insert own favorites" 
   ON user_favorites FOR INSERT 
   WITH CHECK (true);

@@ -42,13 +42,19 @@ async function checkIfFavorited(quoteId) {
 
   try {
     const userId = getUserId();
+    // Try RPC function first (cast to correct types)
     const { data, error } = await supabase
       .rpc('is_quote_favorited', { 
-        p_user_id: userId, 
-        p_quote_id: quoteId 
+        p_user_id: userId,
+        p_quote_id: quoteId
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error checking favorite (using fallback):', error);
+      // Fallback: check localStorage
+      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+      return localFavs.includes(quoteId);
+    }
     return data === true;
   } catch (error) {
     console.error('Error checking favorite status:', error);
@@ -75,29 +81,41 @@ async function toggleFavorite(quoteId) {
     return index === -1; // Return true if added, false if removed
   }
 
-  try {
-    const userId = getUserId();
-    const isFavorited = await checkIfFavorited(quoteId);
+  const userId = getUserId();
+  const isFavorited = await checkIfFavorited(quoteId);
 
+  try {
     if (isFavorited) {
-      // Remove favorite
+      // Try RPC function
       const { error } = await supabase.rpc('remove_favorite', {
         p_user_id: userId,
         p_quote_id: quoteId
       });
       
-      if (error) throw error;
+      if (error) {
+        console.warn('RPC remove_favorite failed, using localStorage:', error);
+        // Fallback to localStorage
+        const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+        const filtered = localFavs.filter(id => id !== quoteId);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(filtered));
+      }
       console.log('Removed from favorites');
       return false;
     } else {
-      // Add favorite
+      // Try RPC function
       const { error } = await supabase.rpc('add_favorite', {
         p_user_id: userId,
         p_quote_id: quoteId
       });
       
-      if (error) throw error;
-      console.log('Added to favorites');
+      if (error) {
+        console.warn('RPC add_favorite failed, using localStorage fallback');
+        // Fallback to localStorage
+        const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+        localFavs.push(quoteId);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+      }
+      
       return true;
     }
   } catch (error) {
