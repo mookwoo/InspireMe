@@ -119,30 +119,141 @@ function renderFavorites(favorites) {
   
   favoritesContainer.innerHTML = html;
 
-  // Add event listeners to remove buttons
-  document.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', async function(e) {
-      e.stopPropagation();
-      const quoteId = parseInt(this.dataset.quoteId);
+  // Add event listeners to cards for enhanced interaction
+  document.querySelectorAll('.favorite-card').forEach(card => {
+    const quoteId = parseInt(card.dataset.quoteId);
+    const removeBtn = card.querySelector('.remove-btn');
+    
+    // Touch events for swipe-to-delete on mobile
+    let startX, startY, currentX, currentY;
+    let isSwipeStarted = false;
+    
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isSwipeStarted = true;
+    });
+    
+    card.addEventListener('touchmove', (e) => {
+      if (!isSwipeStarted) return;
       
-      if (confirm('Remove this quote from your favorites?')) {
-        try {
-          await removeFavorite(quoteId);
-          
-          // Remove card with animation
-          const card = this.closest('.favorite-card');
-          card.style.animation = 'fadeOut 0.3s ease-out';
-          
-          setTimeout(async () => {
-            const favorites = await fetchFavorites();
-            renderFavorites(favorites);
-          }, 300);
-        } catch (error) {
-          alert('Failed to remove favorite. Please try again.');
-        }
+      currentX = e.touches[0].clientX;
+      currentY = e.touches[0].clientY;
+      
+      const diffX = startX - currentX;
+      const diffY = Math.abs(startY - currentY);
+      
+      // Only trigger swipe if horizontal movement is greater than vertical
+      if (diffX > 50 && diffY < 100) {
+        card.classList.add('swipe-left');
+      } else {
+        card.classList.remove('swipe-left');
       }
     });
+    
+    card.addEventListener('touchend', () => {
+      isSwipeStarted = false;
+      if (card.classList.contains('swipe-left')) {
+        // Show confirmation after swipe
+        showRemoveConfirmation(quoteId, card);
+      }
+      card.classList.remove('swipe-left');
+    });
+    
+    // Click event for remove button
+    removeBtn.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      showRemoveConfirmation(quoteId, card);
+    });
   });
+}
+
+// Show custom confirmation modal
+function showRemoveConfirmation(quoteId, cardElement) {
+  const modal = document.createElement('div');
+  modal.className = 'confirm-modal';
+  modal.innerHTML = `
+    <div class="confirm-content">
+      <h3>Remove from Favorites?</h3>
+      <p>This quote will no longer appear in your favorites collection.</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn cancel">Cancel</button>
+        <button class="confirm-btn delete">Remove</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Handle modal actions
+  const cancelBtn = modal.querySelector('.cancel');
+  const deleteBtn = modal.querySelector('.delete');
+  
+  const closeModal = () => {
+    modal.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => modal.remove(), 300);
+  };
+  
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  
+  deleteBtn.addEventListener('click', async () => {
+    closeModal();
+    await handleRemoveFavorite(quoteId, cardElement);
+  });
+}
+
+// Handle the actual removal with animation
+async function handleRemoveFavorite(quoteId, cardElement) {
+  try {
+    // Start removal animation
+    cardElement.classList.add('removing');
+    
+    // Remove from database
+    const success = await removeFavorite(quoteId);
+    
+    if (success) {
+      // Wait for animation to complete, then refresh the list
+      setTimeout(async () => {
+        const favorites = await fetchFavorites();
+        renderFavorites(favorites);
+      }, 400);
+    } else {
+      // If removal failed, revert animation
+      cardElement.classList.remove('removing');
+      showErrorMessage('Failed to remove favorite. Please try again.');
+    }
+  } catch (error) {
+    cardElement.classList.remove('removing');
+    showErrorMessage('Failed to remove favorite. Please try again.');
+  }
+}
+
+// Show error message
+function showErrorMessage(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ef4444;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1.4rem;
+    z-index: 1001;
+    animation: slideIn 0.3s ease;
+  `;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 // Initialize
