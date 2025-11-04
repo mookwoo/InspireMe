@@ -3,6 +3,20 @@ import supabase from "./supabase-client.js";
 const favoritesContainer = document.getElementById('favoritesContainer');
 const emptyState = document.getElementById('emptyState');
 const yearElement = document.getElementById('year');
+const searchInput = document.getElementById('searchInput');
+const compactToggle = document.getElementById('compactToggle');
+const favoritesControls = document.getElementById('favoritesControls');
+const favoritesStats = document.getElementById('favoritesStats');
+const pagination = document.getElementById('pagination');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const pageInfo = document.getElementById('pageInfo');
+
+// Pagination state
+let currentPage = 1;
+const itemsPerPage = 12;
+let allFavorites = [];
+let filteredFavorites = [];
 
 // Get user ID (same function as in main.js)
 function getUserId() {
@@ -91,15 +105,34 @@ async function removeFavorite(quoteId) {
 
 // Render favorites
 function renderFavorites(favorites) {
+  allFavorites = favorites;
+  filteredFavorites = favorites;
+  currentPage = 1;
+  
   if (favorites.length === 0) {
     favoritesContainer.innerHTML = '';
     emptyState.classList.remove('hidden');
+    favoritesControls.style.display = 'none';
+    pagination.style.display = 'none';
     return;
   }
 
   emptyState.classList.add('hidden');
+  favoritesControls.style.display = 'flex';
   
-  const html = favorites.map(quote => `
+  // Update stats
+  favoritesStats.textContent = `${favorites.length} favorite${favorites.length !== 1 ? 's' : ''}`;
+  
+  renderPage();
+}
+
+// Render current page
+function renderPage() {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageItems = filteredFavorites.slice(startIndex, endIndex);
+  
+  const html = pageItems.map(quote => `
     <div class="favorite-card" data-quote-id="${quote.id}">
       <button 
         class="remove-btn" 
@@ -166,6 +199,24 @@ function renderFavorites(favorites) {
       showRemoveConfirmation(quoteId, card);
     });
   });
+  
+  // Update pagination
+  updatePagination();
+}
+
+// Update pagination controls
+function updatePagination() {
+  const totalPages = Math.ceil(filteredFavorites.length / itemsPerPage);
+  
+  if (totalPages <= 1) {
+    pagination.style.display = 'none';
+    return;
+  }
+  
+  pagination.style.display = 'flex';
+  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = currentPage === totalPages;
 }
 
 // Show custom confirmation modal
@@ -267,6 +318,57 @@ async function init() {
   // Set copyright year
   if (yearElement) {
     yearElement.textContent = new Date().getFullYear();
+  }
+  
+  // Search functionality
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      if (!searchTerm) {
+        filteredFavorites = allFavorites;
+      } else {
+        filteredFavorites = allFavorites.filter(quote => 
+          quote.text.toLowerCase().includes(searchTerm) ||
+          quote.author.toLowerCase().includes(searchTerm) ||
+          (quote.category && quote.category.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      currentPage = 1;
+      favoritesStats.textContent = `${filteredFavorites.length} of ${allFavorites.length} favorite${allFavorites.length !== 1 ? 's' : ''}`;
+      renderPage();
+    });
+  }
+  
+  // Compact view toggle
+  if (compactToggle) {
+    compactToggle.addEventListener('click', () => {
+      favoritesContainer.classList.toggle('compact');
+      compactToggle.classList.toggle('active');
+    });
+  }
+  
+  // Pagination controls
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+  
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredFavorites.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderPage();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
   }
 }
 

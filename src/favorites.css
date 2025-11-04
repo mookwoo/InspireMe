@@ -6,12 +6,115 @@
   margin-top: 20px;
 }
 
+/* Controls for view options */
+.favorites-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-container {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.view-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.view-toggle {
+  background: #f3f4f6;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.3rem;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-toggle.active {
+  background: #667eea;
+  color: white;
+}
+
+.view-toggle:hover:not(.active) {
+  background: #e5e7eb;
+}
+
+.favorites-stats {
+  font-size: 1.3rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
 .favorites-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   width: 100%;
   margin-top: 20px;
+}
+
+/* Compact view */
+.favorites-container.compact {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.favorites-container.compact .favorite-card {
+  padding: 16px;
+  padding-right: 50px;
+}
+
+.favorites-container.compact .quote-text {
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+
+.favorites-container.compact .quote-author {
+  font-size: 1.1rem;
+}
+
+.favorites-container.compact .quote-category {
+  font-size: 1rem;
+  padding: 3px 8px;
+}
+
+.favorites-container.compact .remove-btn {
+  width: 32px;
+  height: 32px;
+  top: 10px;
+  right: 10px;
+}
+
+.favorites-container.compact .remove-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .favorite-card {
@@ -321,4 +424,61 @@
   .favorite-card .quote-text {
     font-size: 1.4rem;
   }
+  
+  .favorites-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-container {
+    max-width: 100%;
+  }
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 30px;
+  padding: 20px 0;
+}
+
+.pagination-btn {
+  background: white;
+  border: 2px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: #667eea;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.pagination-info {
+  font-size: 1.3rem;
+  color: #6b7280;
+  padding: 0 12px;
 }
