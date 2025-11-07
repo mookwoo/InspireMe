@@ -249,7 +249,7 @@ async function submitReject(reason) {
     
     if (error) throw error;
     
-    showToast('Quote approved!', 'success');
+    showToast('Quote rejected!', 'success');
     // Note: Not awaited intentionally - non-blocking UI update after user action
     loadStats();
     loadQuotes(currentFilter);
