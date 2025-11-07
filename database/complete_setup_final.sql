@@ -69,6 +69,15 @@ CREATE TABLE user_favorites (
   UNIQUE(user_id, quote_id)
 );
 
+-- =============================================================================
+-- RESERVED FOR FUTURE FEATURE: Collections (Organize Favorites)
+-- =============================================================================
+-- The following tables are designed for a future feature that will allow users
+-- to organize their favorite quotes into custom collections (e.g., "Morning Motivation",
+-- "Work Quotes", "Personal Growth"). These are included in the schema now to avoid
+-- breaking changes later, but the feature is not yet implemented in the frontend.
+-- Related RPC functions are also defined below but unused until feature implementation.
+
 -- Use TEXT for user_id to support anonymous users
 CREATE TABLE collections (
   id BIGSERIAL PRIMARY KEY,
@@ -104,6 +113,7 @@ CREATE INDEX idx_quotes_text_search ON quotes USING gin(to_tsvector('english', t
 CREATE INDEX idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX idx_user_favorites_quote_id ON user_favorites(quote_id);
 CREATE INDEX idx_user_favorites_created_at ON user_favorites(created_at);
+-- Collections indexes (for future feature)
 CREATE INDEX idx_collections_user_id ON collections(user_id);
 CREATE INDEX idx_collection_quotes_collection_id ON collection_quotes(collection_id);
 CREATE INDEX idx_collection_quotes_quote_id ON collection_quotes(quote_id);
@@ -331,6 +341,13 @@ BEGIN
   RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- =============================================================================
+-- RESERVED FOR FUTURE FEATURE: Collections RPC Functions
+-- =============================================================================
+-- The following functions support the Collections feature (organizing favorites
+-- into custom groups). These are not yet used in the frontend but are included
+-- for future implementation.
 
 -- Collections functions with TEXT user_id
 CREATE OR REPLACE FUNCTION create_collection(p_user_id TEXT, p_name TEXT, p_description TEXT DEFAULT NULL, p_color TEXT DEFAULT '#667eea', p_icon TEXT DEFAULT '📁')

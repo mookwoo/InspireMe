@@ -236,6 +236,7 @@ async function submitReject(reason) {
       }
       
       showToast('Quote rejected! (Mock mode - not saved)', 'success');
+      // Note: Not awaited intentionally - non-blocking UI update after user action
       loadStats();
       loadQuotes(currentFilter);
       return;
@@ -248,7 +249,8 @@ async function submitReject(reason) {
     
     if (error) throw error;
     
-    showToast('Quote rejected', 'success');
+    showToast('Quote approved!', 'success');
+    // Note: Not awaited intentionally - non-blocking UI update after user action
     loadStats();
     loadQuotes(currentFilter);
   } catch (error) {
@@ -283,6 +285,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       this.classList.add('active');
       
       // Load quotes for selected status
+      // Note: Not awaited intentionally - non-blocking UI update
       const status = this.dataset.status;
       loadQuotes(status);
     });

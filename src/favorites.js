@@ -1,4 +1,5 @@
 import supabase from "./supabase-client.js";
+import { getUserId } from "./user-utils.js";
 
 const favoritesContainer = document.getElementById('favoritesContainer');
 const emptyState = document.getElementById('emptyState');
@@ -18,20 +19,9 @@ const itemsPerPage = 12;
 let allFavorites = [];
 let filteredFavorites = [];
 
-// Get user ID (same function as in main.js)
-function getUserId() {
-  const storageKey = 'inspireme_user_id';
-  let userId = localStorage.getItem(storageKey);
-  
-  if (!userId) {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    userId = `user_${timestamp}_${random}`;
-    localStorage.setItem(storageKey, userId);
-  }
-  
-  return userId;
-}
+// Swipe gesture constants
+const SWIPE_THRESHOLD_X = 50; // Minimum horizontal distance to trigger swipe
+const SWIPE_THRESHOLD_Y = 100; // Maximum vertical distance allowed for horizontal swipe
 
 // Check if Supabase is configured
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -177,7 +167,7 @@ function renderPage() {
       const diffY = Math.abs(startY - currentY);
       
       // Only trigger swipe if horizontal movement is greater than vertical
-      if (diffX > 50 && diffY < 100) {
+      if (diffX > SWIPE_THRESHOLD_X && diffY < SWIPE_THRESHOLD_Y) {
         card.classList.add('swipe-left');
       } else {
         card.classList.remove('swipe-left');

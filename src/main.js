@@ -1,4 +1,5 @@
 import supabase from "./supabase-client.js";
+import { getUserId } from "./user-utils.js";
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -12,24 +13,6 @@ let categories = [];
 
 let lastDisplayedQuoteId = null; // Track last displayed quote's ID instead of index
 let currentQuoteId = null; // Track currently displayed quote ID for favorites
-
-// ===== USER ID MANAGEMENT =====
-// Generate or retrieve anonymous user ID
-function getUserId() {
-  const storageKey = 'inspireme_user_id';
-  let userId = localStorage.getItem(storageKey);
-  
-  if (!userId) {
-    // Generate new user ID: user_[timestamp]_[random]
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    userId = `user_${timestamp}_${random}`;
-    localStorage.setItem(storageKey, userId);
-    console.log('Created new user ID:', userId);
-  }
-  
-  return userId;
-}
 
 // ===== FAVORITES MANAGEMENT =====
 // Check if a quote is favorited
@@ -100,7 +83,7 @@ async function toggleFavorite(quoteId) {
         localStorage.setItem(`favorites_${userId}`, JSON.stringify(filtered));
       }
       console.log('Removed from favorites');
-      return false;
+      return false; // Return new state: not favorited
     } else {
       // Try RPC function
       const { error } = await supabase.rpc('add_favorite', {
@@ -116,7 +99,7 @@ async function toggleFavorite(quoteId) {
         localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
       }
       
-      return true;
+      return true; // Return new state: now favorited
     }
   } catch (error) {
     console.error('Error toggling favorite:', error);
