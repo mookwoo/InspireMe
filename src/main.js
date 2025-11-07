@@ -14,6 +14,15 @@ let categories = [];
 let lastDisplayedQuoteId = null; // Track last displayed quote's ID instead of index
 let currentQuoteId = null; // Track currently displayed quote ID for favorites
 
+// Check if Supabase is configured - declare early to avoid hoisting issues
+const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
+
+if (useMockData) {
+  console.log("🎭 Running in MOCK MODE - No Supabase configuration found");
+  console.log("To use real database, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env file");
+}
+
 // ===== FAVORITES MANAGEMENT =====
 // Check if a quote is favorited
 async function checkIfFavorited(quoteId) {
@@ -98,6 +107,7 @@ async function toggleFavorite(quoteId) {
         localFavs.push(quoteId);
         localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
       }
+      console.log('Added to favorites');
       
       return true; // Return new state: now favorited
     }
@@ -136,15 +146,6 @@ const MOCK_QUOTES = [
   { id: 7, text: "Happiness is not something ready made. It comes from your own actions.", author: "Dalai Lama", category: "Happiness" },
   { id: 8, text: "Love all, trust a few, do wrong to none.", author: "William Shakespeare", category: "Wisdom" },
 ];
-
-// Check if Supabase is configured
-const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
-
-if (useMockData) {
-  console.log("🎭 Running in MOCK MODE - No Supabase configuration found");
-  console.log("To use real database, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env file");
-}
 
 // Fetch quotes from Supabase (with fallback to mock data)
 async function fetchQuotes() {

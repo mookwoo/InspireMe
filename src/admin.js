@@ -29,6 +29,10 @@ const MOCK_STATS = {
   total: 13
 };
 
+// Check if Supabase is configured - declare early to avoid hoisting issues
+const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+let useMockData = !hasSupabaseConfig;
+
 // Fetch and populate category dropdown for admin add quote form
 async function populateAdminCategoryDropdown() {
   try {
@@ -66,10 +70,6 @@ async function populateAdminCategoryDropdown() {
     console.error('Error populating categories:', error);
   }
 }
-
-// Check if Supabase is configured
-const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig;
 
 // Current filter status
 let currentFilter = 'pending';

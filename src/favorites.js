@@ -23,6 +23,13 @@ let filteredFavorites = [];
 const SWIPE_THRESHOLD_X = 50; // Minimum horizontal distance to trigger swipe
 const SWIPE_THRESHOLD_Y = 100; // Maximum vertical distance allowed for horizontal swipe
 
+// HTML escaping utility to prevent XSS attacks
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Check if Supabase is configured
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 const useMockData = !hasSupabaseConfig;
@@ -134,9 +141,9 @@ function renderPage() {
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
         </svg>
       </button>
-      <p class="quote-text">"${quote.text}"</p>
-      <p class="quote-author">— ${quote.author}</p>
-      ${quote.category ? `<span class="quote-category">${quote.category}</span>` : ''}
+      <p class="quote-text">"${escapeHtml(quote.text)}"</p>
+      <p class="quote-author">— ${escapeHtml(quote.author)}</p>
+      ${quote.category ? `<span class="quote-category">${escapeHtml(quote.category)}</span>` : ''}
     </div>
   `).join('');
   

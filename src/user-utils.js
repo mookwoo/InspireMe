@@ -18,7 +18,10 @@ export function getUserId() {
     const random = Math.random().toString(36).substring(2, 15);
     userId = `user_${timestamp}_${random}`;
     localStorage.setItem(storageKey, userId);
-    console.log('Created new user ID:', userId);
+    // Only log in development to protect user privacy
+    if (import.meta.env && import.meta.env.DEV) {
+      console.log('Created new user ID:', userId);
+    }
   }
   
   return userId;
