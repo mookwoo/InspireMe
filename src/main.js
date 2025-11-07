@@ -92,7 +92,7 @@ async function toggleFavorite(quoteId) {
       });
       
       if (error) {
-        console.warn('RPC add_favorite failed, using localStorage fallback');
+        console.warn('RPC add_favorite failed, using localStorage fallback:', error);
         // Fallback to localStorage
         const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
         localFavs.push(quoteId);
