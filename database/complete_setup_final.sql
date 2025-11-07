@@ -113,6 +113,7 @@ CREATE INDEX idx_quotes_text_search ON quotes USING gin(to_tsvector('english', t
 CREATE INDEX idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX idx_user_favorites_quote_id ON user_favorites(quote_id);
 CREATE INDEX idx_user_favorites_created_at ON user_favorites(created_at);
+CREATE INDEX idx_user_favorites_user_created ON user_favorites(user_id, created_at DESC);
 -- Collections indexes (for future feature)
 CREATE INDEX idx_collections_user_id ON collections(user_id);
 CREATE INDEX idx_collection_quotes_collection_id ON collection_quotes(collection_id);
@@ -276,6 +277,13 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_pending_quotes()
 RETURNS TABLE(id BIGINT, text TEXT, author TEXT, category TEXT, created_at TIMESTAMP WITH TIME ZONE) AS $$
 BEGIN
+  -- Note: This function uses SECURITY DEFINER to bypass RLS.
+  -- For production, implement proper admin role checks:
+  -- IF NOT EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()) THEN
+  --   RAISE EXCEPTION 'Unauthorized: Admin access required';
+  -- END IF;
+  -- Currently allows all users for demo purposes.
+  
   RETURN QUERY SELECT q.id, q.text, q.author, q.category, q.created_at FROM quotes q WHERE q.status = 'pending' ORDER BY q.created_at ASC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -283,6 +291,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION approve_quote(quote_id BIGINT)
 RETURNS VOID AS $$
 BEGIN
+  -- Note: This function uses SECURITY DEFINER to bypass RLS.
+  -- For production, implement proper admin role checks:
+  -- IF NOT EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()) THEN
+  --   RAISE EXCEPTION 'Unauthorized: Admin access required';
+  -- END IF;
+  -- Currently allows all users for demo purposes.
+  
   UPDATE quotes SET status = 'approved', reviewed_at = NOW(), reviewed_by = auth.uid() WHERE id = quote_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -290,6 +305,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION reject_quote(quote_id BIGINT, reason TEXT DEFAULT NULL)
 RETURNS VOID AS $$
 BEGIN
+  -- Note: This function uses SECURITY DEFINER to bypass RLS.
+  -- For production, implement proper admin role checks:
+  -- IF NOT EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()) THEN
+  --   RAISE EXCEPTION 'Unauthorized: Admin access required';
+  -- END IF;
+  -- Currently allows all users for demo purposes.
+  
   UPDATE quotes SET status = 'rejected', reviewed_at = NOW(), reviewed_by = auth.uid(), rejection_reason = reason WHERE id = quote_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -298,6 +320,13 @@ CREATE OR REPLACE FUNCTION get_moderation_stats()
 RETURNS JSON AS $$
 DECLARE result JSON;
 BEGIN
+  -- Note: This function uses SECURITY DEFINER to bypass RLS.
+  -- For production, implement proper admin role checks:
+  -- IF NOT EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()) THEN
+  --   RAISE EXCEPTION 'Unauthorized: Admin access required';
+  -- END IF;
+  -- Currently allows all users for demo purposes.
+  
   SELECT json_build_object(
     'pending', (SELECT COUNT(*) FROM quotes WHERE status = 'pending'),
     'approved', (SELECT COUNT(*) FROM quotes WHERE status = 'approved'),
