@@ -160,6 +160,17 @@
                 <!-- Categories will be populated dynamically -->
               </select>
             </div>
+            <div class="form-group">
+              <label for="tagsInput">Tags (optional)</label>
+              <input 
+                type="text" 
+                id="tagsInput" 
+                name="tags" 
+                placeholder="e.g., motivation, success, inspiration"
+                aria-label="Enter tags separated by commas"
+              />
+              <small class="form-hint">Separate tags with commas</small>
+            </div>
             <div class="form-actions">
               <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
               <button type="submit" class="btn btn-submit">Submit Quote</button>

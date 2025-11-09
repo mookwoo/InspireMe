@@ -444,7 +444,8 @@ INSERT INTO quotes (text, author, category, tags, status) VALUES
   ('Happiness is not something ready made. It comes from your own actions.', 'Dalai Lama', 'Happiness', ARRAY['happiness', 'action', 'wisdom'], 'approved'),
   ('It''s not whether you get knocked down, it''s whether you get up.', 'Vince Lombardi', 'Motivation', ARRAY['resilience', 'perseverance'], 'approved'),
   ('Don''t watch the clock; do what it does. Keep going.', 'Sam Levenson', 'Success', ARRAY['persistence', 'time'], 'approved'),
-  ('Love all, trust a few, do wrong to none.', 'William Shakespeare', 'Wisdom', ARRAY['love', 'trust', 'wisdom'], 'approved')
+  ('Love all, trust a few, do wrong to none.', 'William Shakespeare', 'Wisdom', ARRAY['love', 'trust', 'wisdom'], 'approved'),
+  ('The best thing to hold onto in life is each other.', 'Audrey Hepburn', 'Love', ARRAY['love', 'relationships', 'life'], 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Success message

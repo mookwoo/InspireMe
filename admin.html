@@ -108,6 +108,18 @@
           </div>
 
           <div class="form-group">
+            <label for="adminTags">Tags (optional)</label>
+            <input 
+              type="text" 
+              id="adminTags" 
+              name="tags" 
+              placeholder="e.g., motivation, success, inspiration"
+              aria-label="Enter tags separated by commas"
+            />
+            <small class="form-hint">Separate tags with commas</small>
+          </div>
+
+          <div class="form-group">
             <label for="adminStatus">Status *</label>
             <select id="adminStatus" name="status" required>
               <option value="approved">Approved (publish immediately)</option>

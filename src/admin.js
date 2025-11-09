@@ -430,11 +430,15 @@ document.addEventListener('DOMContentLoaded', async function() {
   addQuoteForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    const tagsInput = document.getElementById('adminTags').value.trim();
+    const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
     const formData = {
       text: adminQuoteText.value.trim(),
       author: document.getElementById('adminAuthor').value.trim(),
       category: document.getElementById('adminCategory').value,
       status: document.getElementById('adminStatus').value,
+      tags: tagsArray,
     };
 
     // Validate

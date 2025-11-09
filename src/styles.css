@@ -626,6 +626,14 @@ footer nav a {
   color: #6b7280;
 }
 
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.2rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;

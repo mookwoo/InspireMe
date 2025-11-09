@@ -364,10 +364,14 @@ quoteTextInput.addEventListener("input", function () {
 quoteForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
+  const tagsInput = document.getElementById("tagsInput").value.trim();
+  const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
   const formData = {
     text: quoteTextInput.value.trim(),
     author: document.getElementById("authorInput").value.trim(),
     category: document.getElementById("categoryInput").value,
+    tags: tagsArray,
   };
 
   // Validate
