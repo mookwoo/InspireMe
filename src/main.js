@@ -145,6 +145,7 @@ const MOCK_QUOTES = [
   { id: 6, text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", category: "Motivation" },
   { id: 7, text: "Happiness is not something ready made. It comes from your own actions.", author: "Dalai Lama", category: "Happiness" },
   { id: 8, text: "Love all, trust a few, do wrong to none.", author: "William Shakespeare", category: "Wisdom" },
+  { id: 9, text: "The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart.", author: "Audrey Hepburn", category: "Love" },
 ];
 
 // Fetch quotes from Supabase (with fallback to mock data)

@@ -15,6 +15,7 @@ const MOCK_ALL_QUOTES = [
   { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Inspiration", created_at: new Date(Date.now() - 345600000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 302400000).toISOString() },
   { id: 5, text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill", category: "Success", created_at: new Date(Date.now() - 432000000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 388800000).toISOString() },
   { id: 6, text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", category: "Motivation", created_at: new Date(Date.now() - 518400000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 475200000).toISOString() },
+  { id: 7, text: "The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart.", author: "Audrey Hepburn", category: "Love", created_at: new Date(Date.now() - 604800000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 561600000).toISOString() },
   
   // Rejected quotes
   { id: 105, text: "This is a test quote.", author: "Test Author", category: "Test", created_at: new Date(Date.now() - 604800000).toISOString(), status: "rejected", reviewed_at: new Date(Date.now() - 561600000).toISOString(), rejection_reason: "Not inspirational enough" },
