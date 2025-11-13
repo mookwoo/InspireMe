@@ -32,7 +32,7 @@ const MOCK_STATS = {
 
 // Check if Supabase is configured - declare early to avoid hoisting issues
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig;
+const useMockData = !hasSupabaseConfig;
 
 // Fetch and populate category dropdown for admin add quote form
 async function populateAdminCategoryDropdown() {
