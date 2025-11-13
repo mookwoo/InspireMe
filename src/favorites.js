@@ -262,6 +262,18 @@ async function init() {
     yearElement.textContent = new Date().getFullYear();
   }
   
+  // Event delegation for remove buttons
+  favoritesContainer.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.remove-btn');
+    if (removeBtn) {
+      const quoteId = parseInt(removeBtn.dataset.quoteId);
+      const cardElement = removeBtn.closest('.favorite-card');
+      if (cardElement) {
+        showRemoveConfirmation(quoteId, cardElement);
+      }
+    }
+  });
+  
   // Search functionality
   let searchTimeout;
   if (searchInput) {
