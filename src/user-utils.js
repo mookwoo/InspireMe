@@ -15,7 +15,11 @@ export function getUserId() {
   if (!userId) {
     // Generate new user ID: user_[timestamp]_[random]
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
+    // Generate a 13-character random string using Web Crypto API
+    const random = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(b => b.toString(36).padStart(2, '0'))
+      .join('')
+      .substring(0, 13);
     userId = `user_${timestamp}_${random}`;
     localStorage.setItem(storageKey, userId);
     // Only log in development to protect user privacy
