@@ -285,9 +285,14 @@ async function init() {
   
   // Compact view toggle
   if (compactToggle) {
+    // Ensure aria-pressed is initialized to "false"
+    if (!compactToggle.hasAttribute('aria-pressed')) {
+      compactToggle.setAttribute('aria-pressed', 'false');
+    }
     compactToggle.addEventListener('click', () => {
-      favoritesContainer.classList.toggle('compact');
+      const isActive = favoritesContainer.classList.toggle('compact');
       compactToggle.classList.toggle('active');
+      compactToggle.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
   }
   
