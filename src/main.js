@@ -108,7 +108,7 @@ async function toggleFavorite(quoteId) {
         localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
       }
       console.log('Added to favorites');
-      
+      console.log('Added to favorites');
       return true; // Return new state: now favorited
     }
   } catch (error) {
