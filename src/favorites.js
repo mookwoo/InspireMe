@@ -238,24 +238,13 @@ async function handleRemoveFavorite(quoteId, cardElement) {
 // Show error message
 function showErrorMessage(message) {
   const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #ef4444;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 1.4rem;
-    z-index: 1001;
-    animation: slideIn 0.3s ease;
-  `;
+  toast.className = 'error-toast';
   toast.textContent = message;
-  
+
   document.body.appendChild(toast);
-  
+
   setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease';
+    toast.classList.add('hiding');
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
