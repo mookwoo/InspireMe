@@ -16,7 +16,7 @@ let currentQuoteId = null; // Track currently displayed quote ID for favorites
 
 // Check if Supabase is configured - declare early to avoid hoisting issues
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
+const useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
 
 if (useMockData) {
   console.log("🎭 Running in MOCK MODE - No Supabase configuration found");
