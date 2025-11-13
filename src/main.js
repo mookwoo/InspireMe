@@ -291,18 +291,8 @@ if (favoriteBtn) {
       // Add loading state
       favoriteBtn.disabled = true;
       
-      const isNowFavorited = await toggleFavorite(currentQuoteId);
-      
-      // Update UI
-      if (isNowFavorited) {
-        favoriteBtn.classList.add('favorited');
-        favoriteBtn.setAttribute('aria-label', 'Remove from favorites');
-        favoriteBtn.setAttribute('title', 'Remove from favorites');
-      } else {
-        favoriteBtn.classList.remove('favorited');
-        favoriteBtn.setAttribute('aria-label', 'Add to favorites');
-        favoriteBtn.setAttribute('title', 'Add to favorites');
-      }
+      await toggleFavorite(currentQuoteId);
+      await updateFavoriteButton(currentQuoteId); // Reuse existing function
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
       alert('Failed to update favorite. Please try again.');
