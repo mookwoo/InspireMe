@@ -14,19 +14,25 @@ export function getUserId() {
   
   if (!userId) {
     // Generate new user ID: user_[timestamp]_[random]
-    const timestamp = Date.now();
-    // Generate a 13-character random string using Web Crypto API
-    const random = Array.from(crypto.getRandomValues(new Uint8Array(8)))
-      .map(b => b.toString(36).padStart(2, '0'))
-      .join('')
-      .substring(0, 13);
-    userId = `user_${timestamp}_${random}`;
-    localStorage.setItem(storageKey, userId);
-    // Only log in development to protect user privacy
-    if (import.meta.env && import.meta.env.DEV) {
-      console.log('Created new user ID:', userId);
+  try {
+    let userId = localStorage.getItem(storageKey);
+    
+    if (!userId) {
+      // Generate new user ID: user_[timestamp]_[random]
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      userId = `user_${timestamp}_${random}`;
+      localStorage.setItem(storageKey, userId);
+      // Only log in development to protect user privacy
+      if (import.meta.env && import.meta.env.DEV) {
+        console.log('Created new user ID:', userId);
+      }
     }
+    
+    return userId;
+  } catch (error) {
+    console.warn('localStorage unavailable, generating temporary user ID:', error);
+    // Fallback: generate a session-only ID
+    return `user_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   }
-  
-  return userId;
 }
