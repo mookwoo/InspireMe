@@ -151,53 +151,7 @@ function renderPage() {
   
   favoritesContainer.innerHTML = html;
 
-  // Add event listeners to cards for enhanced interaction
-  document.querySelectorAll('.favorite-card').forEach(card => {
-    const quoteId = parseInt(card.dataset.quoteId);
-    const removeBtn = card.querySelector('.remove-btn');
-    
-    // Touch events for swipe-to-delete on mobile
-    let startX, startY, currentX, currentY;
-    let isSwipeStarted = false;
-    
-    card.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isSwipeStarted = true;
-    });
-    
-    card.addEventListener('touchmove', (e) => {
-      if (!isSwipeStarted) return;
-      
-      currentX = e.touches[0].clientX;
-      currentY = e.touches[0].clientY;
-      
-      const diffX = startX - currentX;
-      const diffY = Math.abs(startY - currentY);
-      
-      // Only trigger swipe if horizontal movement is greater than vertical
-      if (diffX > SWIPE_THRESHOLD_X && diffY < SWIPE_THRESHOLD_Y) {
-        card.classList.add('swipe-left');
-      } else {
-        card.classList.remove('swipe-left');
-      }
-    });
-    
-    card.addEventListener('touchend', () => {
-      isSwipeStarted = false;
-      if (card.classList.contains('swipe-left')) {
-        // Show confirmation after swipe
-        showRemoveConfirmation(quoteId, card);
-      }
-      card.classList.remove('swipe-left');
-    });
-    
-    // Click event for remove button
-    removeBtn.addEventListener('click', async function(e) {
-      e.stopPropagation();
-      showRemoveConfirmation(quoteId, card);
-    });
-  });
+  // Event listeners are now handled via event delegation outside this function.
   
   // Update pagination
   updatePagination();
