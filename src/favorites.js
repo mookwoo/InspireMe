@@ -263,23 +263,27 @@ async function init() {
   }
   
   // Search functionality
+  let searchTimeout;
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      const searchTerm = e.target.value.toLowerCase().trim();
-      
-      if (!searchTerm) {
-        filteredFavorites = allFavorites;
-      } else {
-        filteredFavorites = allFavorites.filter(quote => 
-          quote.text.toLowerCase().includes(searchTerm) ||
-          quote.author.toLowerCase().includes(searchTerm) ||
-          (quote.category && quote.category.toLowerCase().includes(searchTerm))
-        );
-      }
-      
-      currentPage = 1;
-      favoritesStats.textContent = `${filteredFavorites.length} of ${allFavorites.length} favorite${allFavorites.length !== 1 ? 's' : ''}`;
-      renderPage();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        if (!searchTerm) {
+          filteredFavorites = allFavorites;
+        } else {
+          filteredFavorites = allFavorites.filter(quote => 
+            quote.text.toLowerCase().includes(searchTerm) ||
+            quote.author.toLowerCase().includes(searchTerm) ||
+            (quote.category && quote.category.toLowerCase().includes(searchTerm))
+          );
+        }
+        
+        currentPage = 1;
+        favoritesStats.textContent = `${filteredFavorites.length} of ${allFavorites.length} favorite${allFavorites.length !== 1 ? 's' : ''}`;
+        renderPage();
+      }, 300); // 300ms debounce
     });
   }
   
