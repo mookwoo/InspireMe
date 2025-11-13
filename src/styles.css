@@ -748,6 +748,64 @@ footer nav a {
   }
 }
 
+/* Fallback Warning Banner */
+.fallback-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  font-size: 1.4rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.fallback-warning span {
+  flex: 1;
+  text-align: center;
+}
+
+.fallback-warning button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.fallback-warning button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.fallback-warning button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 480px) {
   .container {
     padding: 20px;
@@ -770,5 +828,21 @@ footer nav a {
     height: 40px;
     font-size: 1.8rem;
     margin: 0 8px;
+  }
+  
+  .fallback-warning {
+    padding: 10px 15px;
+    font-size: 1.2rem;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .fallback-warning span {
+    text-align: center;
+  }
+  
+  .fallback-warning button {
+    font-size: 1.2rem;
+    padding: 6px 12px;
   }
 }

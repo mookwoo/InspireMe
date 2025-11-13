@@ -18,9 +18,127 @@ let currentQuoteId = null; // Track currently displayed quote ID for favorites
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
 
+// Connection state management
+let isInFallbackMode = false;
+let pendingSyncActions = [];
+let syncInProgress = false;
+
 if (useMockData) {
   console.log("🎭 Running in MOCK MODE - No Supabase configuration found");
   console.log("To use real database, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env file");
+}
+
+// ===== FALLBACK MODE MANAGEMENT =====
+// Show warning banner when in fallback mode
+function showFallbackWarning() {
+  let warningBanner = document.getElementById('fallbackWarning');
+  
+  if (!warningBanner) {
+    warningBanner = document.createElement('div');
+    warningBanner.id = 'fallbackWarning';
+    warningBanner.className = 'fallback-warning';
+    warningBanner.innerHTML = `
+      <span>⚠️ Connection issue detected. Favorites are temporarily saved locally and will sync when connection is restored.</span>
+      <button id="retryConnection" aria-label="Retry connection">Retry</button>
+    `;
+    document.body.insertBefore(warningBanner, document.body.firstChild);
+    
+    // Add retry button handler
+    document.getElementById('retryConnection').addEventListener('click', attemptReconnect);
+  }
+  
+  warningBanner.style.display = 'flex';
+}
+
+// Hide warning banner
+function hideFallbackWarning() {
+  const warningBanner = document.getElementById('fallbackWarning');
+  if (warningBanner) {
+    warningBanner.style.display = 'none';
+  }
+}
+
+// Attempt to reconnect and sync pending actions
+async function attemptReconnect() {
+  if (useMockData || syncInProgress) return;
+  
+  syncInProgress = true;
+  const retryBtn = document.getElementById('retryConnection');
+  if (retryBtn) {
+    retryBtn.textContent = 'Syncing...';
+    retryBtn.disabled = true;
+  }
+  
+  try {
+    // Test connection with a simple query
+    const { error } = await supabase.from('quotes').select('id').limit(1);
+    
+    if (!error) {
+      console.log('✅ Connection restored, syncing pending actions...');
+      await syncPendingActions();
+      isInFallbackMode = false;
+      hideFallbackWarning();
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Reconnection failed:', error);
+    alert('Still unable to connect. Please check your internet connection.');
+  } finally {
+    syncInProgress = false;
+    if (retryBtn) {
+      retryBtn.textContent = 'Retry';
+      retryBtn.disabled = false;
+    }
+  }
+}
+
+// Sync pending actions from localStorage to database
+async function syncPendingActions() {
+  if (useMockData || pendingSyncActions.length === 0) return;
+  
+  const userId = getUserId();
+  const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+  
+  try {
+    // Get current favorites from database
+    const { data: dbFavorites, error } = await supabase
+      .from('favorites')
+      .select('quote_id')
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+    
+    const dbFavIds = new Set(dbFavorites?.map(f => f.quote_id) || []);
+    
+    // Sync additions
+    for (const quoteId of localFavs) {
+      if (!dbFavIds.has(quoteId)) {
+        await supabase.rpc('add_favorite', {
+          p_user_id: userId,
+          p_quote_id: quoteId
+        });
+        console.log(`Synced addition: quote ${quoteId}`);
+      }
+    }
+    
+    // Sync removals
+    for (const quoteId of dbFavIds) {
+      if (!localFavs.includes(quoteId)) {
+        await supabase.rpc('remove_favorite', {
+          p_user_id: userId,
+          p_quote_id: quoteId
+        });
+        console.log(`Synced removal: quote ${quoteId}`);
+      }
+    }
+    
+    pendingSyncActions = [];
+    console.log('✅ All pending actions synced successfully');
+  } catch (error) {
+    console.error('Sync failed:', error);
+    throw error;
+  }
 }
 
 // ===== FAVORITES MANAGEMENT =====
@@ -32,8 +150,15 @@ async function checkIfFavorited(quoteId) {
     return favorites.includes(quoteId);
   }
 
+  const userId = getUserId();
+  
+  // If in fallback mode, use localStorage immediately
+  if (isInFallbackMode) {
+    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+    return localFavs.includes(quoteId);
+  }
+
   try {
-    const userId = getUserId();
     // Try RPC function first (cast to correct types)
     const { data, error } = await supabase
       .rpc('is_quote_favorited', { 
@@ -42,15 +167,23 @@ async function checkIfFavorited(quoteId) {
       });
 
     if (error) {
-      console.error('Error checking favorite (using fallback):', error);
-      // Fallback: check localStorage
+      console.error('RPC error checking favorite, entering fallback mode:', error);
+      // Enter fallback mode
+      isInFallbackMode = true;
+      showFallbackWarning();
+      
+      // Use localStorage as fallback
       const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
       return localFavs.includes(quoteId);
     }
     return data === true;
   } catch (error) {
-    console.error('Error checking favorite status:', error);
-    return false;
+    console.error('Error checking favorite status, entering fallback mode:', error);
+    isInFallbackMode = true;
+    showFallbackWarning();
+    
+    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+    return localFavs.includes(quoteId);
   }
 }
 
@@ -75,6 +208,26 @@ async function toggleFavorite(quoteId) {
 
   const userId = getUserId();
 
+  // If in fallback mode, use localStorage and track for sync
+  if (isInFallbackMode) {
+    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+    const index = localFavs.indexOf(quoteId);
+    const wasAdded = index === -1;
+    
+    if (index > -1) {
+      localFavs.splice(index, 1);
+      console.log('Removed from favorites (fallback mode - will sync later)');
+    } else {
+      localFavs.push(quoteId);
+      console.log('Added to favorites (fallback mode - will sync later)');
+    }
+    
+    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+    pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
+    
+    return wasAdded;
+  }
+
   try {
     // Try to add favorite first
     const { error: addError } = await supabase.rpc('add_favorite', {
@@ -84,6 +237,12 @@ async function toggleFavorite(quoteId) {
 
     if (!addError) {
       console.log('Added to favorites');
+      // Update localStorage to stay in sync
+      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+      if (!localFavs.includes(quoteId)) {
+        localFavs.push(quoteId);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+      }
       return true; // Now favorited
     }
 
@@ -95,27 +254,57 @@ async function toggleFavorite(quoteId) {
 
     if (!removeError) {
       console.log('Removed from favorites');
+      // Update localStorage to stay in sync
+      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+      const index = localFavs.indexOf(quoteId);
+      if (index > -1) {
+        localFavs.splice(index, 1);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+      }
       return false; // Now not favorited
     }
 
-    // If both failed, fallback to localStorage
-    console.warn('Both RPC add/remove failed, using localStorage fallback:', addError, removeError);
+    // If both failed, enter fallback mode
+    console.warn('Both RPC add/remove failed, entering fallback mode:', addError, removeError);
+    isInFallbackMode = true;
+    showFallbackWarning();
+    
     const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
     const index = localFavs.indexOf(quoteId);
+    const wasAdded = index === -1;
+    
     if (index > -1) {
       localFavs.splice(index, 1);
-      localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
-      console.log('Removed from favorites (localStorage fallback)');
-      return false;
+      console.log('Removed from favorites (fallback mode)');
     } else {
       localFavs.push(quoteId);
-      localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
-      console.log('Added to favorites (localStorage fallback)');
-      return true;
+      console.log('Added to favorites (fallback mode)');
     }
+    
+    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+    pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
+    
+    return wasAdded;
   } catch (error) {
-    console.error('Error toggling favorite:', error);
-    throw error;
+    console.error('Error toggling favorite, entering fallback mode:', error);
+    isInFallbackMode = true;
+    showFallbackWarning();
+    
+    // Use localStorage fallback
+    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+    const index = localFavs.indexOf(quoteId);
+    const wasAdded = index === -1;
+    
+    if (index > -1) {
+      localFavs.splice(index, 1);
+    } else {
+      localFavs.push(quoteId);
+    }
+    
+    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
+    pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
+    
+    return wasAdded;
   }
 }
 
@@ -293,9 +482,20 @@ if (favoriteBtn) {
       
       await toggleFavorite(currentQuoteId);
       await updateFavoriteButton(currentQuoteId); // Reuse existing function
+      
+      // Show success message if in fallback mode
+      if (isInFallbackMode && !useMockData) {
+        // The warning banner is already visible, no need for additional alert
+        console.log('Favorite updated locally, will sync when connection restored');
+      }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
-      alert('Failed to update favorite. Please try again.');
+      if (isInFallbackMode) {
+        // If we're in fallback mode, the action was still saved locally
+        console.log('Saved locally despite error');
+      } else {
+        alert('Failed to update favorite. Please try again.');
+      }
     } finally {
       favoriteBtn.disabled = false;
     }
