@@ -69,6 +69,15 @@ async function populateAdminCategoryDropdown() {
     });
   } catch (error) {
     console.error('Error populating categories:', error);
+    const adminCategory = document.getElementById('adminCategory');
+    if (adminCategory) {
+      adminCategory.innerHTML = '';
+      const errorOption = document.createElement('option');
+      errorOption.textContent = 'Failed to load categories';
+      errorOption.disabled = true;
+      errorOption.selected = true;
+      adminCategory.appendChild(errorOption);
+    }
   }
 }
 
