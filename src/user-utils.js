@@ -10,10 +10,7 @@
  */
 export function getUserId() {
   const storageKey = 'inspireme_user_id';
-  let userId = localStorage.getItem(storageKey);
   
-  if (!userId) {
-    // Generate new user ID: user_[timestamp]_[random]
   try {
     let userId = localStorage.getItem(storageKey);
     
