@@ -101,10 +101,12 @@ async function removeFavorite(quoteId) {
 }
 
 // Render favorites
-function renderFavorites(favorites) {
+function renderFavorites(favorites, preservePage = false) {
   allFavorites = favorites;
   filteredFavorites = favorites;
-  currentPage = 1;
+  if (!preservePage) {
+    currentPage = 1;
+  }
   
   if (favorites.length === 0) {
     favoritesContainer.innerHTML = '';
