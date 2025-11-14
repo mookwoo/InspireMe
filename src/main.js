@@ -28,6 +28,71 @@ if (useMockData) {
   console.log("To use real database, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env file");
 }
 
+// ===== LOCALSTORAGE HELPER FUNCTIONS =====
+/**
+ * Get favorites from localStorage for a given user
+ * @param {string} userId - The user ID
+ * @returns {number[]} Array of favorite quote IDs
+ */
+function getLocalFavorites(userId) {
+  const key = useMockData ? 'mock_favorites' : `favorites_${userId}`;
+  return JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+/**
+ * Set favorites in localStorage for a given user
+ * @param {string} userId - The user ID (ignored in mock mode)
+ * @param {number[]} favorites - Array of favorite quote IDs
+ */
+function setLocalFavorites(userId, favorites) {
+  const key = useMockData ? 'mock_favorites' : `favorites_${userId}`;
+  localStorage.setItem(key, JSON.stringify(favorites));
+}
+
+/**
+ * Add a quote to localStorage favorites
+ * @param {string} userId - The user ID
+ * @param {number} quoteId - The quote ID to add
+ * @returns {boolean} True if added, false if already existed
+ */
+function addLocalFavorite(userId, quoteId) {
+  const favorites = getLocalFavorites(userId);
+  if (!favorites.includes(quoteId)) {
+    favorites.push(quoteId);
+    setLocalFavorites(userId, favorites);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Remove a quote from localStorage favorites
+ * @param {string} userId - The user ID
+ * @param {number} quoteId - The quote ID to remove
+ * @returns {boolean} True if removed, false if didn't exist
+ */
+function removeLocalFavorite(userId, quoteId) {
+  const favorites = getLocalFavorites(userId);
+  const index = favorites.indexOf(quoteId);
+  if (index > -1) {
+    favorites.splice(index, 1);
+    setLocalFavorites(userId, favorites);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Check if a quote is in localStorage favorites
+ * @param {string} userId - The user ID
+ * @param {number} quoteId - The quote ID to check
+ * @returns {boolean} True if favorited
+ */
+function isLocalFavorite(userId, quoteId) {
+  const favorites = getLocalFavorites(userId);
+  return favorites.includes(quoteId);
+}
+
 // ===== FALLBACK MODE MANAGEMENT =====
 // Show warning banner when in fallback mode
 function showFallbackWarning() {
@@ -98,7 +163,7 @@ async function syncPendingActions() {
   if (useMockData || pendingSyncActions.length === 0) return;
   
   const userId = getUserId();
-  const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
+  const localFavs = getLocalFavorites(userId);
   
   try {
     // Get current favorites from database
@@ -146,16 +211,14 @@ async function syncPendingActions() {
 async function checkIfFavorited(quoteId) {
   if (useMockData || !supabase) {
     // In mock mode, use localStorage
-    const favorites = JSON.parse(localStorage.getItem('mock_favorites') || '[]');
-    return favorites.includes(quoteId);
+    return isLocalFavorite(null, quoteId);
   }
 
   const userId = getUserId();
   
   // If in fallback mode, use localStorage immediately
   if (isInFallbackMode) {
-    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    return localFavs.includes(quoteId);
+    return isLocalFavorite(userId, quoteId);
   }
 
   try {
@@ -173,8 +236,7 @@ async function checkIfFavorited(quoteId) {
       showFallbackWarning();
       
       // Use localStorage as fallback
-      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-      return localFavs.includes(quoteId);
+      return isLocalFavorite(userId, quoteId);
     }
     return data === true;
   } catch (error) {
@@ -182,8 +244,7 @@ async function checkIfFavorited(quoteId) {
     isInFallbackMode = true;
     showFallbackWarning();
     
-    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    return localFavs.includes(quoteId);
+    return isLocalFavorite(userId, quoteId);
   }
 }
 
@@ -191,40 +252,34 @@ async function checkIfFavorited(quoteId) {
 async function toggleFavorite(quoteId) {
   if (useMockData || !supabase) {
     // Mock mode: use localStorage
-    const favorites = JSON.parse(localStorage.getItem('mock_favorites') || '[]');
-    const index = favorites.indexOf(quoteId);
+    const userId = null; // Not used in mock mode
+    const wasRemoved = removeLocalFavorite(userId, quoteId);
     
-    if (index > -1) {
-      favorites.splice(index, 1);
+    if (wasRemoved) {
       console.log('Removed from favorites (mock)');
+      return false;
     } else {
-      favorites.push(quoteId);
+      addLocalFavorite(userId, quoteId);
       console.log('Added to favorites (mock)');
+      return true;
     }
-    
-    localStorage.setItem('mock_favorites', JSON.stringify(favorites));
-    return index === -1; // Return true if added, false if removed
   }
 
   const userId = getUserId();
 
   // If in fallback mode, use localStorage and track for sync
   if (isInFallbackMode) {
-    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    const index = localFavs.indexOf(quoteId);
-    const wasAdded = index === -1;
+    const wasRemoved = removeLocalFavorite(userId, quoteId);
+    const wasAdded = !wasRemoved;
     
-    if (index > -1) {
-      localFavs.splice(index, 1);
-      console.log('Removed from favorites (fallback mode - will sync later)');
-    } else {
-      localFavs.push(quoteId);
+    if (wasAdded) {
+      addLocalFavorite(userId, quoteId);
       console.log('Added to favorites (fallback mode - will sync later)');
+    } else {
+      console.log('Removed from favorites (fallback mode - will sync later)');
     }
     
-    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
     pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
-    
     return wasAdded;
   }
 
@@ -238,11 +293,7 @@ async function toggleFavorite(quoteId) {
     if (!addError) {
       console.log('Added to favorites');
       // Update localStorage to stay in sync
-      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-      if (!localFavs.includes(quoteId)) {
-        localFavs.push(quoteId);
-        localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
-      }
+      addLocalFavorite(userId, quoteId);
       return true; // Now favorited
     }
 
@@ -255,12 +306,7 @@ async function toggleFavorite(quoteId) {
     if (!removeError) {
       console.log('Removed from favorites');
       // Update localStorage to stay in sync
-      const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-      const index = localFavs.indexOf(quoteId);
-      if (index > -1) {
-        localFavs.splice(index, 1);
-        localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
-      }
+      removeLocalFavorite(userId, quoteId);
       return false; // Now not favorited
     }
 
@@ -269,21 +315,17 @@ async function toggleFavorite(quoteId) {
     isInFallbackMode = true;
     showFallbackWarning();
     
-    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    const index = localFavs.indexOf(quoteId);
-    const wasAdded = index === -1;
+    const wasRemoved = removeLocalFavorite(userId, quoteId);
+    const wasAdded = !wasRemoved;
     
-    if (index > -1) {
-      localFavs.splice(index, 1);
-      console.log('Removed from favorites (fallback mode)');
-    } else {
-      localFavs.push(quoteId);
+    if (wasAdded) {
+      addLocalFavorite(userId, quoteId);
       console.log('Added to favorites (fallback mode)');
+    } else {
+      console.log('Removed from favorites (fallback mode)');
     }
     
-    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
     pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
-    
     return wasAdded;
   } catch (error) {
     console.error('Error toggling favorite, entering fallback mode:', error);
@@ -291,19 +333,14 @@ async function toggleFavorite(quoteId) {
     showFallbackWarning();
     
     // Use localStorage fallback
-    const localFavs = JSON.parse(localStorage.getItem(`favorites_${userId}`) || '[]');
-    const index = localFavs.indexOf(quoteId);
-    const wasAdded = index === -1;
+    const wasRemoved = removeLocalFavorite(userId, quoteId);
+    const wasAdded = !wasRemoved;
     
-    if (index > -1) {
-      localFavs.splice(index, 1);
-    } else {
-      localFavs.push(quoteId);
+    if (wasAdded) {
+      addLocalFavorite(userId, quoteId);
     }
     
-    localStorage.setItem(`favorites_${userId}`, JSON.stringify(localFavs));
     pendingSyncActions.push({ quoteId, action: wasAdded ? 'add' : 'remove' });
-    
     return wasAdded;
   }
 }
