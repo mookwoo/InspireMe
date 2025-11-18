@@ -14,11 +14,15 @@ let categories = [];
 let lastDisplayedQuoteId = null; // Track last displayed quote's ID instead of index
 let currentQuoteId = null; // Track currently displayed quote ID for favorites
 
-// Check if Supabase is configured - declare early to avoid hoisting issues
+/**
+ * Determine if Supabase is configured, otherwise use mock data. This is set at startup and doesn't change. Read env vars once. The reason is that if Supabase is misconfigured, we want to stay in mock mode rather than toggling back and forth on connection issues.
+ */
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig; // Use mock data if Supabase not configured
+let useMockData = !hasSupabaseConfig; 
 
-// Connection state management
+/**
+ * Connection state management. This tracks if we're in fallback mode due to connection issues. The state can change dynamically. The reason is that if the connection drops, we want to enter fallback mode, and if it restores, we want to exit it.
+ */
 let isInFallbackMode = false;
 let pendingSyncActions = [];
 let syncInProgress = false;
