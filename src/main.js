@@ -543,6 +543,170 @@ if (favoriteBtn) {
   });
 }
 
+// ===== SHARE FUNCTIONALITY =====
+const shareBtn = document.getElementById('shareBtn');
+const shareMenu = document.getElementById('shareMenu');
+
+// Format quote text for sharing
+function formatQuoteForShare(quoteText, quoteAuthor) {
+  const appUrl = window.location.origin;
+  return `"${quoteText}"\n\n— ${quoteAuthor}\n\nShared from InspireMe: ${appUrl}`;
+}
+
+// Get short quote text for sharing (without app link)
+function getShareText(quoteText, quoteAuthor) {
+  return `"${quoteText}" — ${quoteAuthor}`;
+}
+
+// Copy to clipboard
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      textArea.remove();
+      return true;
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      textArea.remove();
+      return false;
+    }
+  }
+}
+
+// Show temporary success message
+function showShareSuccess(message = 'Copied to clipboard!') {
+  const toast = document.createElement('div');
+  toast.className = 'share-toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    z-index: 10000;
+    animation: slideUp 0.3s ease-out;
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'fadeOut 0.3s ease-out';
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+// Handle share actions
+async function handleShare(platform) {
+  const quoteText = text.innerText.replace(/^"|"$/g, ''); // Remove quotes if present
+  const quoteAuthor = author.innerText.replace(/^—\s*/, ''); // Remove dash if present
+  
+  if (!quoteText || !quoteAuthor) {
+    alert('No quote to share!');
+    return;
+  }
+  
+  const appUrl = window.location.origin;
+  const shareText = getShareText(quoteText, quoteAuthor);
+  const fullShareText = formatQuoteForShare(quoteText, quoteAuthor);
+  
+  // Close menu
+  shareMenu.setAttribute('aria-hidden', 'true');
+  shareBtn.setAttribute('aria-expanded', 'false');
+  
+  switch (platform) {
+    case 'twitter':
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(appUrl)}`;
+      window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+      showShareSuccess('Opening X (Twitter)...');
+      break;
+      
+    case 'linkedin':
+      const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(appUrl)}&summary=${encodeURIComponent(shareText)}`;
+      window.open(linkedinUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+      showShareSuccess('Opening LinkedIn...');
+      break;
+      
+    case 'whatsapp':
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      showShareSuccess('Opening WhatsApp...');
+      break;
+      
+    case 'copy':
+      const success = await copyToClipboard(fullShareText);
+      if (success) {
+        showShareSuccess('Copied to clipboard!');
+        shareBtn.classList.add('success');
+        setTimeout(() => shareBtn.classList.remove('success'), 1000);
+      } else {
+        alert('Failed to copy to clipboard. Please try again.');
+      }
+      break;
+  }
+}
+
+// Toggle share menu
+if (shareBtn) {
+  shareBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isExpanded = shareBtn.getAttribute('aria-expanded') === 'true';
+    
+    if (isExpanded) {
+      shareMenu.setAttribute('aria-hidden', 'true');
+      shareBtn.setAttribute('aria-expanded', 'false');
+    } else {
+      shareMenu.setAttribute('aria-hidden', 'false');
+      shareBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+}
+
+// Handle share option clicks
+if (shareMenu) {
+  shareMenu.addEventListener('click', (e) => {
+    const option = e.target.closest('.share-option');
+    if (option) {
+      const platform = option.dataset.share;
+      handleShare(platform);
+    }
+  });
+}
+
+// Close share menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (shareBtn && shareMenu && !shareBtn.contains(e.target) && !shareMenu.contains(e.target)) {
+    shareMenu.setAttribute('aria-hidden', 'true');
+    shareBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// Close share menu with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && shareMenu && shareMenu.getAttribute('aria-hidden') === 'false') {
+    shareMenu.setAttribute('aria-hidden', 'true');
+    shareBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
 // ===== Quote Submission Feature =====
 
 // Modal elements
