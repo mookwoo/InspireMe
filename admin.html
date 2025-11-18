@@ -103,17 +103,20 @@
             <label for="adminCategory">Category *</label>
             <select id="adminCategory" name="category" required>
               <option value="">Select a category</option>
-              <option value="Motivation">Motivation</option>
-              <option value="Inspiration">Inspiration</option>
-              <option value="Success">Success</option>
-              <option value="Life">Life</option>
-              <option value="Wisdom">Wisdom</option>
-              <option value="Happiness">Happiness</option>
-              <option value="Love">Love</option>
-              <option value="Innovation">Innovation</option>
-              <option value="Leadership">Leadership</option>
-              <option value="Humor">Humor</option>
+              <!-- Categories will be populated dynamically -->
             </select>
+          </div>
+
+          <div class="form-group">
+            <label for="adminTags">Tags (optional)</label>
+            <input 
+              type="text" 
+              id="adminTags" 
+              name="tags" 
+              placeholder="e.g., motivation, success, inspiration"
+              aria-label="Enter tags separated by commas"
+            />
+            <small class="form-hint">Separate tags with commas</small>
           </div>
 
           <div class="form-group">

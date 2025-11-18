@@ -15,6 +15,7 @@ const MOCK_ALL_QUOTES = [
   { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Inspiration", created_at: new Date(Date.now() - 345600000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 302400000).toISOString() },
   { id: 5, text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill", category: "Success", created_at: new Date(Date.now() - 432000000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 388800000).toISOString() },
   { id: 6, text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", category: "Motivation", created_at: new Date(Date.now() - 518400000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 475200000).toISOString() },
+  { id: 7, text: "The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart.", author: "Audrey Hepburn", category: "Love", created_at: new Date(Date.now() - 604800000).toISOString(), status: "approved", reviewed_at: new Date(Date.now() - 561600000).toISOString() },
   
   // Rejected quotes
   { id: 105, text: "This is a test quote.", author: "Test Author", category: "Test", created_at: new Date(Date.now() - 604800000).toISOString(), status: "rejected", reviewed_at: new Date(Date.now() - 561600000).toISOString(), rejection_reason: "Not inspirational enough" },
@@ -29,9 +30,56 @@ const MOCK_STATS = {
   total: 13
 };
 
-// Check if Supabase is configured
+// Check if Supabase is configured - declare early to avoid hoisting issues
 const hasSupabaseConfig = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-let useMockData = !hasSupabaseConfig;
+const useMockData = !hasSupabaseConfig;
+
+// Fetch and populate category dropdown for admin add quote form
+async function populateAdminCategoryDropdown() {
+  try {
+    const adminCategory = document.getElementById('adminCategory');
+    if (!adminCategory) return;
+    
+    let categories;
+    
+    if (useMockData || !supabase) {
+      // Get categories from mock data
+      categories = [...new Set(MOCK_ALL_QUOTES.map(q => q.category))];
+    } else {
+      // Fetch from database
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("category")
+        .eq("status", "approved")
+        .neq("category", null);
+      
+      if (error) throw error;
+      categories = [...new Set(data.map(q => q.category))];
+    }
+    
+    // Sort alphabetically
+    const sortedCategories = categories.filter(cat => cat && cat.trim() !== "").sort((a, b) => a.localeCompare(b));
+    
+    // Populate dropdown
+    sortedCategories.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      adminCategory.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Error populating categories:', error);
+    const adminCategory = document.getElementById('adminCategory');
+    if (adminCategory) {
+      adminCategory.innerHTML = '';
+      const errorOption = document.createElement('option');
+      errorOption.textContent = 'Failed to load categories';
+      errorOption.disabled = true;
+      errorOption.selected = true;
+      adminCategory.appendChild(errorOption);
+    }
+  }
+}
 
 // Current filter status
 let currentFilter = 'pending';
@@ -198,6 +246,7 @@ async function submitReject(reason) {
       }
       
       showToast('Quote rejected! (Mock mode - not saved)', 'success');
+      // Note: Not awaited intentionally - non-blocking UI update after user action
       loadStats();
       loadQuotes(currentFilter);
       return;
@@ -210,7 +259,8 @@ async function submitReject(reason) {
     
     if (error) throw error;
     
-    showToast('Quote rejected', 'success');
+    showToast('Quote rejected!', 'success');
+    // Note: Not awaited intentionally - non-blocking UI update after user action
     loadStats();
     loadQuotes(currentFilter);
   } catch (error) {
@@ -235,7 +285,7 @@ function showToast(message, type) {
 }
 
 // Tab filtering
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   
   tabBtns.forEach(btn => {
@@ -245,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
       this.classList.add('active');
       
       // Load quotes for selected status
+      // Note: Not awaited intentionally - non-blocking UI update
       const status = this.dataset.status;
       loadQuotes(status);
     });
@@ -389,11 +440,15 @@ document.addEventListener('DOMContentLoaded', function() {
   addQuoteForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    const tagsInput = document.getElementById('adminTags').value.trim();
+    const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
     const formData = {
       text: adminQuoteText.value.trim(),
       author: document.getElementById('adminAuthor').value.trim(),
       category: document.getElementById('adminCategory').value,
       status: document.getElementById('adminStatus').value,
+      tags: tagsArray,
     };
 
     // Validate
@@ -463,6 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Initialize - load data after DOM is ready
-  loadStats();
-  loadQuotes('pending');
+  await loadStats();
+  await loadQuotes('pending');
+  
+  // Populate category dropdown
+  await populateAdminCategoryDropdown();
 });
