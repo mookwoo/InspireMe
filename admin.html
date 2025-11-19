@@ -109,14 +109,22 @@
 
           <div class="form-group">
             <label for="adminTags">Tags (optional)</label>
-            <input 
-              type="text" 
-              id="adminTags" 
-              name="tags" 
-              placeholder="e.g., motivation, success, inspiration"
-              aria-label="Enter tags separated by commas"
-            />
-            <small class="form-hint">Separate tags with commas</small>
+            <div id="adminSuggestedTags" class="suggested-tags hidden">
+              <span class="suggestions-label">Suggested tags:</span>
+              <div class="tag-suggestions"></div>
+            </div>
+            <div class="tags-input-wrapper">
+              <div class="selected-tags" id="adminSelectedTags"></div>
+              <input 
+                type="text" 
+                id="adminTags" 
+                name="tags" 
+                placeholder="Type to add tags or select suggestions below"
+                aria-label="Enter tags separated by commas"
+                autocomplete="off"
+              />
+            </div>
+            <small class="form-hint">Press Enter or comma to add a tag</small>
           </div>
 
           <div class="form-group">
