@@ -1,4 +1,9 @@
 import supabase from "./supabase-client.js";
+import { 
+  generateTagSuggestions, 
+  renderTagSuggestions,
+  renderSelectedTags 
+} from "./tag-suggestions.js";
 
 // Mock data for testing without Supabase
 const MOCK_ALL_QUOTES = [
@@ -436,117 +441,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // ===== INTELLIGENT TAG SUGGESTION SYSTEM FOR ADMIN =====
   
+  // Admin toast notification function
+  function showAdminToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'share-toast';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+  
   const adminTagsInput = document.getElementById('adminTags');
   const adminSelectedTagsContainer = document.getElementById('adminSelectedTags');
   const adminSuggestedTagsContainer = document.getElementById('adminSuggestedTags');
   const adminTagSuggestionsContainer = adminSuggestedTagsContainer?.querySelector('.tag-suggestions');
   
   let adminSelectedTags = [];
-  
-  // Comprehensive tag database (same as main.js)
-  const TAG_DATABASE = {
-    emotions: ['happiness', 'joy', 'sadness', 'anger', 'fear', 'love', 'hope', 'peace', 'gratitude', 'compassion'],
-    actions: ['change', 'growth', 'learning', 'achievement', 'persistence', 'courage', 'action', 'effort', 'practice'],
-    motivation: ['motivation', 'inspiration', 'success', 'goals', 'determination', 'ambition', 'drive', 'excellence', 'achievement', 'winning'],
-    development: ['self-improvement', 'mindfulness', 'wisdom', 'knowledge', 'education', 'growth', 'development', 'potential', 'transformation'],
-    philosophy: ['life', 'philosophy', 'meaning', 'purpose', 'existence', 'truth', 'reality', 'perspective', 'mindset'],
-    career: ['career', 'work', 'leadership', 'teamwork', 'innovation', 'entrepreneurship', 'business', 'productivity', 'efficiency'],
-    relationships: ['friendship', 'family', 'relationships', 'connection', 'trust', 'communication', 'empathy', 'understanding'],
-    time: ['future', 'present', 'past', 'time', 'now', 'moment', 'tomorrow', 'today', 'forever'],
-    challenges: ['adversity', 'struggle', 'failure', 'obstacles', 'challenge', 'difficulty', 'hardship', 'resilience', 'overcoming']
-  };
-  
-  const CATEGORY_TAGS = {
-    'Motivation': ['inspiration', 'determination', 'drive', 'ambition', 'goals', 'success', 'achievement', 'perseverance'],
-    'Success': ['achievement', 'excellence', 'winning', 'goals', 'ambition', 'growth', 'progress', 'victory'],
-    'Life': ['wisdom', 'experience', 'journey', 'perspective', 'meaning', 'purpose', 'existence', 'living'],
-    'Love': ['romance', 'affection', 'heart', 'passion', 'devotion', 'connection', 'soul', 'relationship'],
-    'Wisdom': ['knowledge', 'insight', 'understanding', 'truth', 'philosophy', 'enlightenment', 'learning', 'sage'],
-    'Happiness': ['joy', 'contentment', 'bliss', 'gratitude', 'pleasure', 'delight', 'cheerfulness', 'positivity'],
-    'Inspiration': ['creativity', 'imagination', 'vision', 'dreams', 'aspiration', 'encouragement', 'uplift', 'empowerment'],
-    'Innovation': ['creativity', 'invention', 'progress', 'technology', 'change', 'transformation', 'breakthrough', 'pioneering'],
-    'Courage': ['bravery', 'strength', 'fearlessness', 'boldness', 'valor', 'heroism', 'confidence', 'determination']
-  };
-  
-  const KEYWORD_MAPPINGS = {
-    'dream': ['dreams', 'aspiration', 'vision', 'goals', 'future'],
-    'work': ['effort', 'dedication', 'labor', 'career', 'productivity'],
-    'fail': ['failure', 'learning', 'resilience', 'perseverance', 'growth'],
-    'succeed': ['success', 'achievement', 'victory', 'winning', 'excellence'],
-    'love': ['affection', 'passion', 'heart', 'romance', 'devotion'],
-    'friend': ['friendship', 'companionship', 'relationships', 'connection', 'loyalty'],
-    'learn': ['learning', 'education', 'knowledge', 'growth', 'wisdom'],
-    'change': ['transformation', 'evolution', 'progress', 'adaptation', 'growth'],
-    'time': ['moment', 'present', 'future', 'now', 'eternity'],
-    'life': ['existence', 'living', 'journey', 'experience', 'vitality'],
-    'happy': ['happiness', 'joy', 'contentment', 'pleasure', 'bliss'],
-    'strong': ['strength', 'power', 'resilience', 'fortitude', 'endurance'],
-    'believe': ['faith', 'confidence', 'trust', 'conviction', 'certainty'],
-    'beautiful': ['beauty', 'aesthetic', 'elegance', 'grace', 'charm'],
-    'create': ['creativity', 'innovation', 'imagination', 'invention', 'artistry']
-  };
-  
-  function generateAdminTagSuggestions(quoteText, author, category) {
-    const suggestions = new Set();
-    const lowerText = quoteText.toLowerCase();
-    
-    if (category && CATEGORY_TAGS[category]) {
-      CATEGORY_TAGS[category].slice(0, 3).forEach(tag => suggestions.add(tag));
-    }
-    
-    Object.entries(KEYWORD_MAPPINGS).forEach(([keyword, tags]) => {
-      if (lowerText.includes(keyword)) {
-        tags.slice(0, 2).forEach(tag => suggestions.add(tag));
-      }
-    });
-    
-    Object.entries(TAG_DATABASE).forEach(([theme, tags]) => {
-      tags.forEach(tag => {
-        if (lowerText.includes(tag)) {
-          suggestions.add(tag);
-          tags.slice(0, 2).forEach(relatedTag => {
-            if (relatedTag !== tag) suggestions.add(relatedTag);
-          });
-        }
-      });
-    });
-    
-    if (quoteText.length < 100) {
-      suggestions.add('short');
-      suggestions.add('concise');
-    }
-    
-    if (lowerText.includes('never') || lowerText.includes('always') || lowerText.includes('forever')) {
-      suggestions.add('timeless');
-      suggestions.add('eternal');
-    }
-    
-    if (lowerText.includes('you') || lowerText.includes('your')) {
-      suggestions.add('personal');
-      suggestions.add('introspective');
-    }
-    
-    const famousAuthors = {
-      'steve jobs': ['technology', 'innovation', 'business'],
-      'albert einstein': ['science', 'genius', 'physics'],
-      'maya angelou': ['poetry', 'empowerment', 'resilience'],
-      'nelson mandela': ['freedom', 'justice', 'leadership'],
-      'martin luther king': ['equality', 'justice', 'peace'],
-      'buddha': ['mindfulness', 'meditation', 'enlightenment'],
-      'confucius': ['wisdom', 'philosophy', 'ancient']
-    };
-    
-    const lowerAuthor = author.toLowerCase();
-    Object.entries(famousAuthors).forEach(([name, tags]) => {
-      if (lowerAuthor.includes(name)) {
-        tags.forEach(tag => suggestions.add(tag));
-      }
-    });
-    
-    return Array.from(suggestions)
-      .filter(tag => !adminSelectedTags.includes(tag))
-      .slice(0, 8);
-  }
   
   function updateAdminTagSuggestions() {
     const quoteText = adminQuoteText.value.trim();
@@ -558,27 +472,15 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
     
-    const suggestions = generateAdminTagSuggestions(quoteText, author, category);
+    const suggestions = generateTagSuggestions(quoteText, author, category, adminSelectedTags);
     
     if (suggestions.length === 0) {
       adminSuggestedTagsContainer?.classList.add('hidden');
       return;
     }
     
-    if (adminTagSuggestionsContainer) {
-      adminTagSuggestionsContainer.innerHTML = suggestions
-        .map(tag => `
-          <button type="button" class="suggested-tag" data-tag="${tag}">
-            <span>${tag}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-        `)
-        .join('');
-    }
-    
+    // Use shared helper to render suggestions
+    renderTagSuggestions(suggestions, adminTagSuggestionsContainer);
     adminSuggestedTagsContainer?.classList.remove('hidden');
   }
   
@@ -590,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     if (adminSelectedTags.length >= 10) {
-      alert('Maximum 10 tags allowed');
+      showAdminToast('Maximum 10 tags allowed');
       return;
     }
     
@@ -607,21 +509,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   
   function renderAdminSelectedTags() {
-    if (!adminSelectedTagsContainer) return;
-    
-    adminSelectedTagsContainer.innerHTML = adminSelectedTags
-      .map(tag => `
-        <span class="selected-tag">
-          ${tag}
-          <button type="button" class="remove-tag" data-tag="${tag}" aria-label="Remove ${tag} tag">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </span>
-      `)
-      .join('');
+    renderSelectedTags(adminSelectedTags, adminSelectedTagsContainer);
   }
   
   if (adminTagsInput) {
@@ -644,7 +532,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   if (adminQuoteText) {
     let adminQuoteTimeout;
-    const originalInputHandler = adminQuoteText.oninput;
     adminQuoteText.addEventListener('input', () => {
       clearTimeout(adminQuoteTimeout);
       adminQuoteTimeout = setTimeout(updateAdminTagSuggestions, 500);

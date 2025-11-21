@@ -1,5 +1,10 @@
 import supabase from "./supabase-client.js";
 import { getUserId } from "./user-utils.js";
+import { 
+  generateTagSuggestions, 
+  renderTagSuggestions as renderTagSuggestionsHelper,
+  renderSelectedTags as renderSelectedTagsHelper 
+} from "./tag-suggestions.js";
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -574,9 +579,9 @@ async function copyToClipboard(text) {
     textArea.select();
     
     try {
-      document.execCommand('copy');
+      const result = document.execCommand('copy');
       textArea.remove();
-      return true;
+      return result;
     } catch (err) {
       console.error('Fallback copy failed:', err);
       textArea.remove();
@@ -590,26 +595,11 @@ function showShareSuccess(message = 'Copied to clipboard!') {
   const toast = document.createElement('div');
   toast.className = 'share-toast';
   toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #10b981;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1.4rem;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    z-index: 10000;
-    animation: slideUp 0.3s ease-out;
-  `;
   
   document.body.appendChild(toast);
   
   setTimeout(() => {
-    toast.style.animation = 'fadeOut 0.3s ease-out';
+    toast.classList.add('fade-out');
     setTimeout(() => toast.remove(), 300);
   }, 2500);
 }
@@ -620,7 +610,7 @@ async function handleShare(platform) {
   const quoteAuthor = author.innerText.replace(/^—\s*/, ''); // Remove dash if present
   
   if (!quoteText || !quoteAuthor) {
-    alert('No quote to share!');
+    showShareSuccess('No quote to share!');
     return;
   }
   
@@ -658,7 +648,7 @@ async function handleShare(platform) {
         shareBtn.classList.add('success');
         setTimeout(() => shareBtn.classList.remove('success'), 1000);
       } else {
-        alert('Failed to copy to clipboard. Please try again.');
+        showShareSuccess('Failed to copy to clipboard. Please try again.');
       }
       break;
   }
@@ -676,6 +666,11 @@ if (shareBtn) {
     } else {
       shareMenu.setAttribute('aria-hidden', 'false');
       shareBtn.setAttribute('aria-expanded', 'true');
+      // Set focus to first menu item for keyboard accessibility
+      setTimeout(() => {
+        const firstOption = shareMenu.querySelector('.share-option');
+        if (firstOption) firstOption.focus();
+      }, 100);
     }
   });
 }
@@ -699,11 +694,26 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Close share menu with Escape key
+// Close share menu with Escape key and keyboard navigation
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && shareMenu && shareMenu.getAttribute('aria-hidden') === 'false') {
-    shareMenu.setAttribute('aria-hidden', 'true');
-    shareBtn.setAttribute('aria-expanded', 'false');
+  if (shareMenu && shareMenu.getAttribute('aria-hidden') === 'false') {
+    if (e.key === 'Escape') {
+      shareMenu.setAttribute('aria-hidden', 'true');
+      shareBtn.setAttribute('aria-expanded', 'false');
+      shareBtn.focus();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const options = Array.from(shareMenu.querySelectorAll('.share-option'));
+      const currentIndex = options.indexOf(document.activeElement);
+      
+      if (e.key === 'ArrowDown') {
+        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+        options[nextIndex].focus();
+      } else {
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+        options[prevIndex].focus();
+      }
+    }
   }
 });
 
@@ -771,138 +781,6 @@ const tagSuggestionsContainer = suggestedTagsContainer?.querySelector('.tag-sugg
 
 let selectedTags = [];
 
-// Comprehensive tag database organized by themes
-const TAG_DATABASE = {
-  // Emotion-based tags
-  emotions: ['happiness', 'joy', 'sadness', 'anger', 'fear', 'love', 'hope', 'peace', 'gratitude', 'compassion'],
-  
-  // Action-based tags
-  actions: ['change', 'growth', 'learning', 'achievement', 'persistence', 'courage', 'action', 'effort', 'practice'],
-  
-  // Motivation & Success
-  motivation: ['motivation', 'inspiration', 'success', 'goals', 'determination', 'ambition', 'drive', 'excellence', 'achievement', 'winning'],
-  
-  // Personal Development
-  development: ['self-improvement', 'mindfulness', 'wisdom', 'knowledge', 'education', 'growth', 'development', 'potential', 'transformation'],
-  
-  // Life & Philosophy
-  philosophy: ['life', 'philosophy', 'meaning', 'purpose', 'existence', 'truth', 'reality', 'perspective', 'mindset'],
-  
-  // Work & Career
-  career: ['career', 'work', 'leadership', 'teamwork', 'innovation', 'entrepreneurship', 'business', 'productivity', 'efficiency'],
-  
-  // Relationships
-  relationships: ['friendship', 'family', 'relationships', 'connection', 'trust', 'communication', 'empathy', 'understanding'],
-  
-  // Time & Future
-  time: ['future', 'present', 'past', 'time', 'now', 'moment', 'tomorrow', 'today', 'forever'],
-  
-  // Challenges
-  challenges: ['adversity', 'struggle', 'failure', 'obstacles', 'challenge', 'difficulty', 'hardship', 'resilience', 'overcoming']
-};
-
-// Category-specific tag suggestions
-const CATEGORY_TAGS = {
-  'Motivation': ['inspiration', 'determination', 'drive', 'ambition', 'goals', 'success', 'achievement', 'perseverance'],
-  'Success': ['achievement', 'excellence', 'winning', 'goals', 'ambition', 'growth', 'progress', 'victory'],
-  'Life': ['wisdom', 'experience', 'journey', 'perspective', 'meaning', 'purpose', 'existence', 'living'],
-  'Love': ['romance', 'affection', 'heart', 'passion', 'devotion', 'connection', 'soul', 'relationship'],
-  'Wisdom': ['knowledge', 'insight', 'understanding', 'truth', 'philosophy', 'enlightenment', 'learning', 'sage'],
-  'Happiness': ['joy', 'contentment', 'bliss', 'gratitude', 'pleasure', 'delight', 'cheerfulness', 'positivity'],
-  'Inspiration': ['creativity', 'imagination', 'vision', 'dreams', 'aspiration', 'encouragement', 'uplift', 'empowerment'],
-  'Innovation': ['creativity', 'invention', 'progress', 'technology', 'change', 'transformation', 'breakthrough', 'pioneering'],
-  'Courage': ['bravery', 'strength', 'fearlessness', 'boldness', 'valor', 'heroism', 'confidence', 'determination']
-};
-
-// Keywords that suggest specific tags
-const KEYWORD_MAPPINGS = {
-  'dream': ['dreams', 'aspiration', 'vision', 'goals', 'future'],
-  'work': ['effort', 'dedication', 'labor', 'career', 'productivity'],
-  'fail': ['failure', 'learning', 'resilience', 'perseverance', 'growth'],
-  'succeed': ['success', 'achievement', 'victory', 'winning', 'excellence'],
-  'love': ['affection', 'passion', 'heart', 'romance', 'devotion'],
-  'friend': ['friendship', 'companionship', 'relationships', 'connection', 'loyalty'],
-  'learn': ['learning', 'education', 'knowledge', 'growth', 'wisdom'],
-  'change': ['transformation', 'evolution', 'progress', 'adaptation', 'growth'],
-  'time': ['moment', 'present', 'future', 'now', 'eternity'],
-  'life': ['existence', 'living', 'journey', 'experience', 'vitality'],
-  'happy': ['happiness', 'joy', 'contentment', 'pleasure', 'bliss'],
-  'strong': ['strength', 'power', 'resilience', 'fortitude', 'endurance'],
-  'believe': ['faith', 'confidence', 'trust', 'conviction', 'certainty'],
-  'beautiful': ['beauty', 'aesthetic', 'elegance', 'grace', 'charm'],
-  'create': ['creativity', 'innovation', 'imagination', 'invention', 'artistry']
-};
-
-// Analyze quote text and generate intelligent tag suggestions
-function generateTagSuggestions(quoteText, author, category) {
-  const suggestions = new Set();
-  const lowerText = quoteText.toLowerCase();
-  
-  // 1. Add category-specific tags
-  if (category && CATEGORY_TAGS[category]) {
-    CATEGORY_TAGS[category].slice(0, 3).forEach(tag => suggestions.add(tag));
-  }
-  
-  // 2. Analyze keywords in quote text
-  Object.entries(KEYWORD_MAPPINGS).forEach(([keyword, tags]) => {
-    if (lowerText.includes(keyword)) {
-      tags.slice(0, 2).forEach(tag => suggestions.add(tag));
-    }
-  });
-  
-  // 3. Check for thematic keywords
-  Object.entries(TAG_DATABASE).forEach(([theme, tags]) => {
-    tags.forEach(tag => {
-      if (lowerText.includes(tag)) {
-        suggestions.add(tag);
-        // Add related tags from the same theme
-        tags.slice(0, 2).forEach(relatedTag => {
-          if (relatedTag !== tag) suggestions.add(relatedTag);
-        });
-      }
-    });
-  });
-  
-  // 4. Check quote length and sentiment for additional tags
-  if (quoteText.length < 100) {
-    suggestions.add('short');
-    suggestions.add('concise');
-  }
-  
-  if (lowerText.includes('never') || lowerText.includes('always') || lowerText.includes('forever')) {
-    suggestions.add('timeless');
-    suggestions.add('eternal');
-  }
-  
-  if (lowerText.includes('you') || lowerText.includes('your')) {
-    suggestions.add('personal');
-    suggestions.add('introspective');
-  }
-  
-  // 5. Detect famous authors and add relevant tags
-  const famousAuthors = {
-    'steve jobs': ['technology', 'innovation', 'business'],
-    'albert einstein': ['science', 'genius', 'physics'],
-    'maya angelou': ['poetry', 'empowerment', 'resilience'],
-    'nelson mandela': ['freedom', 'justice', 'leadership'],
-    'martin luther king': ['equality', 'justice', 'peace'],
-    'buddha': ['mindfulness', 'meditation', 'enlightenment'],
-    'confucius': ['wisdom', 'philosophy', 'ancient']
-  };
-  
-  const lowerAuthor = author.toLowerCase();
-  Object.entries(famousAuthors).forEach(([name, tags]) => {
-    if (lowerAuthor.includes(name)) {
-      tags.forEach(tag => suggestions.add(tag));
-    }
-  });
-  
-  // Return top 8 suggestions, excluding already selected tags
-  return Array.from(suggestions)
-    .filter(tag => !selectedTags.includes(tag))
-    .slice(0, 8);
-}
-
 // Update tag suggestions display
 function updateTagSuggestions() {
   const quoteText = quoteTextInput.value.trim();
@@ -914,28 +792,15 @@ function updateTagSuggestions() {
     return;
   }
   
-  const suggestions = generateTagSuggestions(quoteText, author, category);
+  const suggestions = generateTagSuggestions(quoteText, author, category, selectedTags);
   
   if (suggestions.length === 0) {
     suggestedTagsContainer?.classList.add('hidden');
     return;
   }
   
-  // Display suggestions
-  if (tagSuggestionsContainer) {
-    tagSuggestionsContainer.innerHTML = suggestions
-      .map(tag => `
-        <button type="button" class="suggested-tag" data-tag="${tag}">
-          <span>${tag}</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      `)
-      .join('');
-  }
-  
+  // Display suggestions using shared helper
+  renderTagSuggestionsHelper(suggestions, tagSuggestionsContainer);
   suggestedTagsContainer?.classList.remove('hidden');
 }
 
@@ -948,7 +813,7 @@ function addTag(tag) {
   }
   
   if (selectedTags.length >= 10) {
-    alert('Maximum 10 tags allowed');
+    showShareSuccess('Maximum 10 tags allowed');
     return;
   }
   
@@ -967,21 +832,7 @@ function removeTag(tag) {
 
 // Render selected tags
 function renderSelectedTags() {
-  if (!selectedTagsContainer) return;
-  
-  selectedTagsContainer.innerHTML = selectedTags
-    .map(tag => `
-      <span class="selected-tag">
-        ${tag}
-        <button type="button" class="remove-tag" data-tag="${tag}" aria-label="Remove ${tag} tag">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </span>
-    `)
-    .join('');
+  renderSelectedTagsHelper(selectedTags, selectedTagsContainer);
 }
 
 // Event listeners for tag input

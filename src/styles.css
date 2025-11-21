@@ -379,8 +379,29 @@ header {
   stroke: #10b981;
 }
 
+/* Share toast styles */
+.share-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  z-index: 10000;
+  animation: slideUpToast 0.3s ease-out;
+}
+
+.share-toast.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
 /* Share toast animations */
-@keyframes slideUp {
+@keyframes slideUpToast {
   from {
     transform: translateX(-50%) translateY(20px);
     opacity: 0;
@@ -388,6 +409,17 @@ header {
   to {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
   }
 }
 
