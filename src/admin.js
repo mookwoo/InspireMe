@@ -1,4 +1,9 @@
 import supabase from "./supabase-client.js";
+import { 
+  generateTagSuggestions, 
+  renderTagSuggestions,
+  renderSelectedTags 
+} from "./tag-suggestions.js";
 
 // Mock data for testing without Supabase
 const MOCK_ALL_QUOTES = [
@@ -418,6 +423,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     addQuoteForm.reset();
     addQuoteFeedback.classList.add('hidden');
     charCount.textContent = '0/500';
+    // Clear selected tags
+    adminSelectedTags = [];
+    renderAdminSelectedTags();
+    adminSuggestedTagsContainer?.classList.add('hidden');
   }
 
   closeAddModal.addEventListener('click', closeAddQuoteModal);
@@ -430,6 +439,137 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
+  // ===== INTELLIGENT TAG SUGGESTION SYSTEM FOR ADMIN =====
+  
+  // Admin toast notification function
+  function showAdminToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'share-toast';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+  
+  const adminTagsInput = document.getElementById('adminTags');
+  const adminSelectedTagsContainer = document.getElementById('adminSelectedTags');
+  const adminSuggestedTagsContainer = document.getElementById('adminSuggestedTags');
+  const adminTagSuggestionsContainer = adminSuggestedTagsContainer?.querySelector('.tag-suggestions');
+  
+  let adminSelectedTags = [];
+  
+  function updateAdminTagSuggestions() {
+    const quoteText = adminQuoteText.value.trim();
+    const author = document.getElementById('adminAuthor')?.value.trim() || '';
+    const category = document.getElementById('adminCategory')?.value || '';
+    
+    if (!quoteText || quoteText.length < 10) {
+      adminSuggestedTagsContainer?.classList.add('hidden');
+      return;
+    }
+    
+    const suggestions = generateTagSuggestions(quoteText, author, category, adminSelectedTags);
+    
+    if (suggestions.length === 0) {
+      adminSuggestedTagsContainer?.classList.add('hidden');
+      return;
+    }
+    
+    // Use shared helper to render suggestions
+    renderTagSuggestions(suggestions, adminTagSuggestionsContainer);
+    adminSuggestedTagsContainer?.classList.remove('hidden');
+  }
+  
+  function addAdminTag(tag) {
+    const normalizedTag = tag.toLowerCase().trim();
+    
+    if (!normalizedTag || adminSelectedTags.includes(normalizedTag)) {
+      return;
+    }
+    
+    if (adminSelectedTags.length >= 10) {
+      showAdminToast('Maximum 10 tags allowed');
+      return;
+    }
+    
+    adminSelectedTags.push(normalizedTag);
+    renderAdminSelectedTags();
+    updateAdminTagSuggestions();
+    adminTagsInput.value = '';
+  }
+  
+  function removeAdminTag(tag) {
+    adminSelectedTags = adminSelectedTags.filter(t => t !== tag);
+    renderAdminSelectedTags();
+    updateAdminTagSuggestions();
+  }
+  
+  function renderAdminSelectedTags() {
+    renderSelectedTags(adminSelectedTags, adminSelectedTagsContainer);
+  }
+  
+  if (adminTagsInput) {
+    adminTagsInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const tag = adminTagsInput.value.trim().replace(/,$/g, '');
+        if (tag) {
+          addAdminTag(tag);
+        }
+      }
+    });
+    
+    let adminSuggestionTimeout;
+    adminTagsInput.addEventListener('input', () => {
+      clearTimeout(adminSuggestionTimeout);
+      adminSuggestionTimeout = setTimeout(updateAdminTagSuggestions, 300);
+    });
+  }
+  
+  if (adminQuoteText) {
+    let adminQuoteTimeout;
+    adminQuoteText.addEventListener('input', () => {
+      clearTimeout(adminQuoteTimeout);
+      adminQuoteTimeout = setTimeout(updateAdminTagSuggestions, 500);
+    });
+  }
+  
+  const adminAuthorInput = document.getElementById('adminAuthor');
+  if (adminAuthorInput) {
+    adminAuthorInput.addEventListener('change', updateAdminTagSuggestions);
+  }
+  
+  const adminCategoryInput = document.getElementById('adminCategory');
+  if (adminCategoryInput) {
+    adminCategoryInput.addEventListener('change', updateAdminTagSuggestions);
+  }
+  
+  if (adminSuggestedTagsContainer) {
+    adminSuggestedTagsContainer.addEventListener('click', (e) => {
+      const suggestedTag = e.target.closest('.suggested-tag');
+      if (suggestedTag) {
+        const tag = suggestedTag.dataset.tag;
+        addAdminTag(tag);
+      }
+    });
+  }
+  
+  if (adminSelectedTagsContainer) {
+    adminSelectedTagsContainer.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.remove-tag');
+      if (removeBtn) {
+        const tag = removeBtn.dataset.tag;
+        removeAdminTag(tag);
+      }
+    });
+  }
+  
+  // ===== END TAG SUGGESTION SYSTEM =====
+
   // Character counter
   adminQuoteText.addEventListener('input', function() {
     const length = this.value.length;
@@ -440,8 +580,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   addQuoteForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const tagsInput = document.getElementById('adminTags').value.trim();
-    const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+    // Use selected tags from the tag system
+    const tagsArray = adminSelectedTags.length > 0 ? adminSelectedTags : [];
 
     const formData = {
       text: adminQuoteText.value.trim(),

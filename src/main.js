@@ -1,5 +1,10 @@
 import supabase from "./supabase-client.js";
 import { getUserId } from "./user-utils.js";
+import { 
+  generateTagSuggestions, 
+  renderTagSuggestions as renderTagSuggestionsHelper,
+  renderSelectedTags as renderSelectedTagsHelper 
+} from "./tag-suggestions.js";
 
 const categoryFilter = document.getElementById("categoryFilter");
 const newQuote = document.querySelector("#newQuote");
@@ -543,6 +548,175 @@ if (favoriteBtn) {
   });
 }
 
+// ===== SHARE FUNCTIONALITY =====
+const shareBtn = document.getElementById('shareBtn');
+const shareMenu = document.getElementById('shareMenu');
+
+// Format quote text for sharing
+function formatQuoteForShare(quoteText, quoteAuthor) {
+  const appUrl = window.location.origin;
+  return `"${quoteText}"\n\n— ${quoteAuthor}\n\nShared from InspireMe: ${appUrl}`;
+}
+
+// Get short quote text for sharing (without app link)
+function getShareText(quoteText, quoteAuthor) {
+  return `"${quoteText}" — ${quoteAuthor}`;
+}
+
+// Copy to clipboard
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const result = document.execCommand('copy');
+      textArea.remove();
+      return result;
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      textArea.remove();
+      return false;
+    }
+  }
+}
+
+// Show temporary success message
+function showShareSuccess(message = 'Copied to clipboard!') {
+  const toast = document.createElement('div');
+  toast.className = 'share-toast';
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+// Handle share actions
+async function handleShare(platform) {
+  const quoteText = text.innerText.replace(/^"|"$/g, ''); // Remove quotes if present
+  const quoteAuthor = author.innerText.replace(/^—\s*/, ''); // Remove dash if present
+  
+  if (!quoteText || !quoteAuthor) {
+    showShareSuccess('No quote to share!');
+    return;
+  }
+  
+  const appUrl = window.location.origin;
+  const shareText = getShareText(quoteText, quoteAuthor);
+  const fullShareText = formatQuoteForShare(quoteText, quoteAuthor);
+  
+  // Close menu
+  shareMenu.setAttribute('aria-hidden', 'true');
+  shareBtn.setAttribute('aria-expanded', 'false');
+  
+  switch (platform) {
+    case 'twitter':
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(appUrl)}`;
+      window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+      showShareSuccess('Opening X (Twitter)...');
+      break;
+      
+    case 'linkedin':
+      const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(appUrl)}&summary=${encodeURIComponent(shareText)}`;
+      window.open(linkedinUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+      showShareSuccess('Opening LinkedIn...');
+      break;
+      
+    case 'whatsapp':
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      showShareSuccess('Opening WhatsApp...');
+      break;
+      
+    case 'copy':
+      const success = await copyToClipboard(fullShareText);
+      if (success) {
+        showShareSuccess('Copied to clipboard!');
+        shareBtn.classList.add('success');
+        setTimeout(() => shareBtn.classList.remove('success'), 1000);
+      } else {
+        showShareSuccess('Failed to copy to clipboard. Please try again.');
+      }
+      break;
+  }
+}
+
+// Toggle share menu
+if (shareBtn) {
+  shareBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isExpanded = shareBtn.getAttribute('aria-expanded') === 'true';
+    
+    if (isExpanded) {
+      shareMenu.setAttribute('aria-hidden', 'true');
+      shareBtn.setAttribute('aria-expanded', 'false');
+    } else {
+      shareMenu.setAttribute('aria-hidden', 'false');
+      shareBtn.setAttribute('aria-expanded', 'true');
+      // Set focus to first menu item for keyboard accessibility
+      setTimeout(() => {
+        const firstOption = shareMenu.querySelector('.share-option');
+        if (firstOption) firstOption.focus();
+      }, 100);
+    }
+  });
+}
+
+// Handle share option clicks
+if (shareMenu) {
+  shareMenu.addEventListener('click', (e) => {
+    const option = e.target.closest('.share-option');
+    if (option) {
+      const platform = option.dataset.share;
+      handleShare(platform);
+    }
+  });
+}
+
+// Close share menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (shareBtn && shareMenu && !shareBtn.contains(e.target) && !shareMenu.contains(e.target)) {
+    shareMenu.setAttribute('aria-hidden', 'true');
+    shareBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// Close share menu with Escape key and keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (shareMenu && shareMenu.getAttribute('aria-hidden') === 'false') {
+    if (e.key === 'Escape') {
+      shareMenu.setAttribute('aria-hidden', 'true');
+      shareBtn.setAttribute('aria-expanded', 'false');
+      shareBtn.focus();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const options = Array.from(shareMenu.querySelectorAll('.share-option'));
+      const currentIndex = options.indexOf(document.activeElement);
+      
+      if (e.key === 'ArrowDown') {
+        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+        options[nextIndex].focus();
+      } else {
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+        options[prevIndex].focus();
+      }
+    }
+  }
+});
+
 // ===== Quote Submission Feature =====
 
 // Modal elements
@@ -569,6 +743,10 @@ function closeModal() {
   quoteForm.reset();
   submitFeedback.classList.add("hidden");
   charCount.textContent = "0/500";
+  // Clear selected tags
+  selectedTags = [];
+  renderSelectedTags();
+  suggestedTagsContainer?.classList.add('hidden');
 }
 
 closeModalBtn.addEventListener("click", closeModal);
@@ -594,12 +772,138 @@ quoteTextInput.addEventListener("input", function () {
   charCount.textContent = `${length}/500`;
 });
 
+// ===== INTELLIGENT TAG SUGGESTION SYSTEM =====
+
+const tagsInput = document.getElementById("tagsInput");
+const selectedTagsContainer = document.getElementById("selectedTags");
+const suggestedTagsContainer = document.getElementById("suggestedTags");
+const tagSuggestionsContainer = suggestedTagsContainer?.querySelector('.tag-suggestions');
+
+let selectedTags = [];
+
+// Update tag suggestions display
+function updateTagSuggestions() {
+  const quoteText = quoteTextInput.value.trim();
+  const author = document.getElementById('authorInput')?.value.trim() || '';
+  const category = document.getElementById('categoryInput')?.value || '';
+  
+  if (!quoteText || quoteText.length < 10) {
+    suggestedTagsContainer?.classList.add('hidden');
+    return;
+  }
+  
+  const suggestions = generateTagSuggestions(quoteText, author, category, selectedTags);
+  
+  if (suggestions.length === 0) {
+    suggestedTagsContainer?.classList.add('hidden');
+    return;
+  }
+  
+  // Display suggestions using shared helper
+  renderTagSuggestionsHelper(suggestions, tagSuggestionsContainer);
+  suggestedTagsContainer?.classList.remove('hidden');
+}
+
+// Add a tag to selected tags
+function addTag(tag) {
+  const normalizedTag = tag.toLowerCase().trim();
+  
+  if (!normalizedTag || selectedTags.includes(normalizedTag)) {
+    return;
+  }
+  
+  if (selectedTags.length >= 10) {
+    showShareSuccess('Maximum 10 tags allowed');
+    return;
+  }
+  
+  selectedTags.push(normalizedTag);
+  renderSelectedTags();
+  updateTagSuggestions();
+  tagsInput.value = '';
+}
+
+// Remove a tag from selected tags
+function removeTag(tag) {
+  selectedTags = selectedTags.filter(t => t !== tag);
+  renderSelectedTags();
+  updateTagSuggestions();
+}
+
+// Render selected tags
+function renderSelectedTags() {
+  renderSelectedTagsHelper(selectedTags, selectedTagsContainer);
+}
+
+// Event listeners for tag input
+if (tagsInput) {
+  // Add tag on Enter or comma
+  tagsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const tag = tagsInput.value.trim().replace(/,$/g, '');
+      if (tag) {
+        addTag(tag);
+      }
+    }
+  });
+  
+  // Update suggestions as user types
+  let suggestionTimeout;
+  tagsInput.addEventListener('input', () => {
+    clearTimeout(suggestionTimeout);
+    suggestionTimeout = setTimeout(updateTagSuggestions, 300);
+  });
+}
+
+// Event listeners for quote text and category changes
+if (quoteTextInput) {
+  let quoteTimeout;
+  quoteTextInput.addEventListener('input', () => {
+    clearTimeout(quoteTimeout);
+    quoteTimeout = setTimeout(updateTagSuggestions, 500);
+  });
+}
+
+const authorInput = document.getElementById('authorInput');
+if (authorInput) {
+  authorInput.addEventListener('change', updateTagSuggestions);
+}
+
+const categoryInput = document.getElementById('categoryInput');
+if (categoryInput) {
+  categoryInput.addEventListener('change', updateTagSuggestions);
+}
+
+// Event delegation for suggested tags and remove buttons
+if (suggestedTagsContainer) {
+  suggestedTagsContainer.addEventListener('click', (e) => {
+    const suggestedTag = e.target.closest('.suggested-tag');
+    if (suggestedTag) {
+      const tag = suggestedTag.dataset.tag;
+      addTag(tag);
+    }
+  });
+}
+
+if (selectedTagsContainer) {
+  selectedTagsContainer.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.remove-tag');
+    if (removeBtn) {
+      const tag = removeBtn.dataset.tag;
+      removeTag(tag);
+    }
+  });
+}
+
+// ===== END TAG SUGGESTION SYSTEM =====
+
 // Submit quote
 quoteForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const tagsInput = document.getElementById("tagsInput").value.trim();
-  const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+  // Use selected tags from the tag system
+  const tagsArray = selectedTags.length > 0 ? selectedTags : [];
 
   const formData = {
     text: quoteTextInput.value.trim(),
