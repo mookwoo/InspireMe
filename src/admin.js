@@ -5,6 +5,105 @@ import {
   renderSelectedTags 
 } from "./tag-suggestions.js";
 
+// ===== ADMIN AUTHENTICATION =====
+// Test credentials (in production, this would be handled by Supabase Auth)
+const ADMIN_CREDENTIALS = {
+  username: 'admin',
+  password: 'inspireme2024'
+};
+
+const AUTH_SESSION_KEY = 'inspireme_admin_auth';
+const AUTH_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Check if user is already authenticated
+function isAuthenticated() {
+  const session = localStorage.getItem(AUTH_SESSION_KEY);
+  if (!session) return false;
+  
+  try {
+    const { timestamp } = JSON.parse(session);
+    const now = Date.now();
+    
+    // Check if session is still valid
+    if (now - timestamp > AUTH_SESSION_DURATION) {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      return false;
+    }
+    
+    return true;
+  } catch {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    return false;
+  }
+}
+
+// Create authenticated session
+function createSession() {
+  const session = {
+    timestamp: Date.now(),
+    authenticated: true
+  };
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+}
+
+// Clear session (logout)
+function clearSession() {
+  localStorage.removeItem(AUTH_SESSION_KEY);
+}
+
+// Validate credentials
+function validateCredentials(username, password) {
+  return username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password;
+}
+
+// Initialize authentication
+function initAuth() {
+  const loginOverlay = document.getElementById('loginOverlay');
+  const adminContainer = document.getElementById('adminContainer');
+  const loginForm = document.getElementById('loginForm');
+  const loginFeedback = document.getElementById('loginFeedback');
+  
+  // Check if already authenticated
+  if (isAuthenticated()) {
+    loginOverlay.classList.add('hidden');
+    adminContainer.classList.remove('hidden');
+    return true;
+  }
+  
+  // Show login form
+  loginOverlay.classList.remove('hidden');
+  adminContainer.classList.add('hidden');
+  
+  // Handle login form submission
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (validateCredentials(username, password)) {
+      createSession();
+      loginOverlay.classList.add('hidden');
+      adminContainer.classList.remove('hidden');
+      
+      // Initialize admin panel after successful login
+      initAdminPanel();
+    } else {
+      loginFeedback.textContent = 'Invalid username or password';
+      loginFeedback.classList.remove('hidden');
+      loginFeedback.classList.add('error');
+      
+      // Shake animation for feedback
+      loginFeedback.style.animation = 'none';
+      setTimeout(() => {
+        loginFeedback.style.animation = 'shake 0.5s ease';
+      }, 10);
+    }
+  });
+  
+  return false;
+}
+
 // Mock data for testing without Supabase
 const MOCK_ALL_QUOTES = [
   // Pending quotes
@@ -291,6 +390,26 @@ function showToast(message, type) {
 
 // Tab filtering
 document.addEventListener('DOMContentLoaded', async function() {
+  // Initialize authentication first
+  const isAlreadyAuthenticated = initAuth();
+  
+  // If already authenticated, initialize admin panel immediately
+  if (isAlreadyAuthenticated) {
+    initAdminPanel();
+  }
+});
+
+// Initialize admin panel after authentication
+async function initAdminPanel() {
+  // Setup logout button
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      clearSession();
+      window.location.reload();
+    });
+  }
+  
   const tabBtns = document.querySelectorAll('.tab-btn');
   
   tabBtns.forEach(btn => {
@@ -663,4 +782,4 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   // Populate category dropdown
   await populateAdminCategoryDropdown();
-});
+}
