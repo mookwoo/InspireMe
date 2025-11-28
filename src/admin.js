@@ -5,66 +5,81 @@ import {
   renderSelectedTags 
 } from "./tag-suggestions.js";
 
-// ===== ADMIN AUTHENTICATION =====
-// Test credentials (in production, this would be handled by Supabase Auth)
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'inspireme2024'
-};
+// ===== ADMIN AUTHENTICATION USING SUPABASE AUTH =====
 
-const AUTH_SESSION_KEY = 'inspireme_admin_auth';
-const AUTH_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-// Check if user is already authenticated
-function isAuthenticated() {
-  const session = localStorage.getItem(AUTH_SESSION_KEY);
-  if (!session) return false;
+// Check if user is already authenticated via Supabase Auth
+async function isAuthenticated() {
+  if (!supabase) {
+    // If Supabase is not configured, deny access
+    console.warn('Supabase Auth not configured. Admin access denied.');
+    return false;
+  }
   
   try {
-    const { timestamp } = JSON.parse(session);
-    const now = Date.now();
-    
-    // Check if session is still valid
-    if (now - timestamp > AUTH_SESSION_DURATION) {
-      localStorage.removeItem(AUTH_SESSION_KEY);
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error checking auth session:', error);
       return false;
     }
-    
-    return true;
-  } catch {
-    localStorage.removeItem(AUTH_SESSION_KEY);
+    return session !== null;
+  } catch (error) {
+    console.error('Error checking authentication:', error);
     return false;
   }
 }
 
-// Create authenticated session
-function createSession() {
-  const session = {
-    timestamp: Date.now(),
-    authenticated: true
-  };
-  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+// Sign in with Supabase Auth
+async function signIn(email, password) {
+  if (!supabase) {
+    throw new Error('Authentication service not available. Please configure Supabase.');
+  }
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+  
+  if (error) {
+    throw error;
+  }
+  
+  return data;
 }
 
-// Clear session (logout)
-function clearSession() {
-  localStorage.removeItem(AUTH_SESSION_KEY);
-}
-
-// Validate credentials
-function validateCredentials(username, password) {
-  return username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password;
+// Sign out with Supabase Auth
+async function signOut() {
+  if (!supabase) {
+    console.warn('Cannot sign out: Supabase Auth not configured.');
+    return;
+  }
+  
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error('Error signing out:', error);
+    throw error;
+  }
 }
 
 // Initialize authentication
-function initAuth() {
+async function initAuth() {
   const loginOverlay = document.getElementById('loginOverlay');
   const adminContainer = document.getElementById('adminContainer');
   const loginForm = document.getElementById('loginForm');
   const loginFeedback = document.getElementById('loginFeedback');
   
+  // Check if Supabase is configured
+  if (!supabase) {
+    loginFeedback.textContent = 'Authentication service not configured. Please set up Supabase.';
+    loginFeedback.classList.remove('hidden');
+    loginFeedback.classList.add('error');
+    loginOverlay.classList.remove('hidden');
+    adminContainer.classList.add('hidden');
+    return false;
+  }
+  
   // Check if already authenticated
-  if (isAuthenticated()) {
+  const authenticated = await isAuthenticated();
+  if (authenticated) {
     loginOverlay.classList.add('hidden');
     adminContainer.classList.remove('hidden');
     return true;
@@ -75,21 +90,28 @@ function initAuth() {
   adminContainer.classList.add('hidden');
   
   // Handle login form submission
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
     
-    if (validateCredentials(username, password)) {
-      createSession();
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in...';
+    loginFeedback.classList.add('hidden');
+    
+    try {
+      await signIn(email, password);
       loginOverlay.classList.add('hidden');
       adminContainer.classList.remove('hidden');
       
       // Initialize admin panel after successful login
       initAdminPanel();
-    } else {
-      loginFeedback.textContent = 'Invalid username or password';
+    } catch (error) {
+      console.error('Login error:', error);
+      loginFeedback.textContent = error.message || 'Invalid email or password';
       loginFeedback.classList.remove('hidden');
       loginFeedback.classList.add('error');
       
@@ -98,6 +120,9 @@ function initAuth() {
       setTimeout(() => {
         loginFeedback.style.animation = 'shake 0.5s ease';
       }, 10);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
     }
   });
   
@@ -391,7 +416,7 @@ function showToast(message, type) {
 // Tab filtering
 document.addEventListener('DOMContentLoaded', async function() {
   // Initialize authentication first
-  const isAlreadyAuthenticated = initAuth();
+  const isAlreadyAuthenticated = await initAuth();
   
   // If already authenticated, initialize admin panel immediately
   if (isAlreadyAuthenticated) {
@@ -404,8 +429,12 @@ async function initAdminPanel() {
   // Setup logout button
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      clearSession();
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut();
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
       window.location.reload();
     });
   }
