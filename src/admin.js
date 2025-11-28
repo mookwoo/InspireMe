@@ -243,6 +243,37 @@ function displayStats(stats) {
   document.getElementById('totalCount').textContent = stats.total;
 }
 
+// Helper function to run an async operation with loading state
+// Default container is quotesContainer, but can be customized
+async function withLoadingState(operation, containerId = 'quotesContainer') {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.classList.add('loading');
+  }
+  
+  try {
+    await operation();
+  } catch (error) {
+    console.error("Error during operation:", error);
+    showToast('An error occurred. Please try again.', 'error');
+    throw error;
+  } finally {
+    if (container) {
+      container.classList.remove('loading');
+    }
+  }
+}
+
+// Helper function to refresh both stats and quotes with loading state
+async function refreshData() {
+  await withLoadingState(async () => {
+    await Promise.all([
+      loadStats(),
+      loadQuotes(currentFilter)
+    ]);
+  });
+}
+
 // Load pending quotes
 async function loadQuotes(status = 'pending') {
   const container = document.getElementById('quotesContainer');
@@ -330,8 +361,7 @@ async function approveQuote(quoteId) {
       }
       
       showToast('Quote approved! (Mock mode - not saved)', 'success');
-      loadStats();
-      loadQuotes(currentFilter);
+      await refreshData();
       return;
     }
 
@@ -340,8 +370,7 @@ async function approveQuote(quoteId) {
     if (error) throw error;
     
     showToast('Quote approved successfully!', 'success');
-    loadStats();
-    loadQuotes(currentFilter);
+    await refreshData();
   } catch (error) {
     console.error("Error approving quote:", error);
     showToast('Failed to approve quote', 'error');
@@ -375,9 +404,7 @@ async function submitReject(reason) {
       }
       
       showToast('Quote rejected! (Mock mode - not saved)', 'success');
-      // Note: Not awaited intentionally - non-blocking UI update after user action
-      loadStats();
-      loadQuotes(currentFilter);
+      await refreshData();
       return;
     }
 
@@ -389,9 +416,7 @@ async function submitReject(reason) {
     if (error) throw error;
     
     showToast('Quote rejected!', 'success');
-    // Note: Not awaited intentionally - non-blocking UI update after user action
-    loadStats();
-    loadQuotes(currentFilter);
+    await refreshData();
   } catch (error) {
     console.error("Error rejecting quote:", error);
     showToast('Failed to reject quote', 'error');
@@ -442,15 +467,19 @@ async function initAdminPanel() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   
   tabBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function() {
       // Update active state
       tabBtns.forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       
-      // Load quotes for selected status
-      // Note: Not awaited intentionally - non-blocking UI update
+      // Load quotes for selected status with loading state
       const status = this.dataset.status;
-      loadQuotes(status);
+      try {
+        await withLoadingState(() => loadQuotes(status));
+      } catch (error) {
+        console.error('Error loading quotes:', error);
+        // Error toast is already shown by withLoadingState
+      }
     });
   });
 
@@ -766,9 +795,8 @@ async function initAdminPanel() {
         
         showAddQuoteFeedback('Quote added successfully! (Mock mode)', 'success');
         
-        // Refresh stats and quotes
-        loadStats();
-        loadQuotes(currentFilter);
+        // Refresh stats and quotes with proper await
+        await refreshData();
         
         setTimeout(() => {
           closeAddQuoteModal();
@@ -781,9 +809,8 @@ async function initAdminPanel() {
 
         showAddQuoteFeedback('Quote added successfully!', 'success');
         
-        // Refresh stats and quotes
-        loadStats();
-        loadQuotes(currentFilter);
+        // Refresh stats and quotes with proper await
+        await refreshData();
 
         setTimeout(() => {
           closeAddQuoteModal();

@@ -594,7 +594,36 @@ body::before {
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
 }
 
-.loading,
+/* Loading state for quotes container */
+#quotesContainer.loading {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none;
+  min-height: 200px;
+}
+
+#quotesContainer.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -20px;
+  margin-left: -20px;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text,
 .no-quotes,
 .error {
   text-align: center;
