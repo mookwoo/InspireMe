@@ -244,9 +244,12 @@ function displayStats(stats) {
 }
 
 // Helper function to run an async operation with loading state
-async function withLoadingState(operation) {
-  const container = document.getElementById('quotesContainer');
-  container.classList.add('loading');
+// Default container is quotesContainer, but can be customized
+async function withLoadingState(operation, containerId = 'quotesContainer') {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.classList.add('loading');
+  }
   
   try {
     await operation();
@@ -255,7 +258,9 @@ async function withLoadingState(operation) {
     showToast('An error occurred. Please try again.', 'error');
     throw error;
   } finally {
-    container.classList.remove('loading');
+    if (container) {
+      container.classList.remove('loading');
+    }
   }
 }
 

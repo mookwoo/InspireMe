@@ -599,6 +599,7 @@ body::before {
   position: relative;
   opacity: 0.6;
   pointer-events: none;
+  min-height: 200px;
 }
 
 #quotesContainer.loading::after {
@@ -606,7 +607,8 @@ body::before {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  margin-top: -20px;
+  margin-left: -20px;
   width: 40px;
   height: 40px;
   border: 3px solid rgba(139, 92, 246, 0.2);
@@ -617,7 +619,7 @@ body::before {
 
 @keyframes spin {
   to {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
