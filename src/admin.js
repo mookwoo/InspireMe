@@ -243,24 +243,30 @@ function displayStats(stats) {
   document.getElementById('totalCount').textContent = stats.total;
 }
 
-// Helper function to refresh both stats and quotes with loading state
-async function refreshData() {
+// Helper function to run an async operation with loading state
+async function withLoadingState(operation) {
   const container = document.getElementById('quotesContainer');
-  
-  // Show loading state
   container.classList.add('loading');
   
   try {
+    await operation();
+  } catch (error) {
+    console.error("Error during operation:", error);
+    showToast('An error occurred. Please try again.', 'error');
+    throw error;
+  } finally {
+    container.classList.remove('loading');
+  }
+}
+
+// Helper function to refresh both stats and quotes with loading state
+async function refreshData() {
+  await withLoadingState(async () => {
     await Promise.all([
       loadStats(),
       loadQuotes(currentFilter)
     ]);
-  } catch (error) {
-    console.error("Error refreshing data:", error);
-    showToast('Failed to refresh data. Please try again.', 'error');
-  } finally {
-    container.classList.remove('loading');
-  }
+  });
 }
 
 // Load pending quotes
@@ -463,17 +469,7 @@ async function initAdminPanel() {
       
       // Load quotes for selected status with loading state
       const status = this.dataset.status;
-      const container = document.getElementById('quotesContainer');
-      container.classList.add('loading');
-      
-      try {
-        await loadQuotes(status);
-      } catch (error) {
-        console.error("Error loading quotes:", error);
-        showToast('Failed to load quotes', 'error');
-      } finally {
-        container.classList.remove('loading');
-      }
+      await withLoadingState(() => loadQuotes(status));
     });
   });
 
