@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel - InspireMe</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- css file -->
+    <link rel="stylesheet" href="/src/admin.css" />
+  </head>
+
+  <body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+      <div class="login-modal">
+        <div class="login-header">
+          <h2>✨ InspireMe Admin</h2>
+          <p>Please sign in to access the admin panel</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="Enter your email"
+              required
+              autocomplete="email"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="Enter password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="login-feedback hidden" id="loginFeedback"></div>
+          <button type="submit" class="btn btn-primary login-btn">Sign In</button>
+        </form>
+        <div class="login-footer">
+          <a href="/" class="back-link">← Back to App</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-container hidden" id="adminContainer">
+      <header class="admin-header">
+        <h1>✨ InspireMe Admin Panel</h1>
+        <div class="header-actions">
+          <button id="addQuoteBtn" class="btn btn-primary">+ Add New Quote</button>
+          <a href="/" class="back-link">← Back to App</a>
+          <button id="logoutBtn" class="logout-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <section class="stats-section">
+        <h2>Moderation Statistics</h2>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-number" id="pendingCount">-</div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="approvedCount">-</div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="rejectedCount">-</div>
+            <div class="stat-label">Rejected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="totalCount">-</div>
+            <div class="stat-label">Total Quotes</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="quotes-section">
+        <div class="section-header">
+          <h2>Submitted Quotes</h2>
+          <div class="filter-tabs">
+            <button class="tab-btn active" data-status="pending">Pending</button>
+            <button class="tab-btn" data-status="approved">Approved</button>
+            <button class="tab-btn" data-status="rejected">Rejected</button>
+            <button class="tab-btn" data-status="all">All</button>
+          </div>
+        </div>
+        <div id="quotesContainer" class="quotes-list">
+          <p class="loading">Loading quotes...</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Add Quote Modal -->
+    <div id="addQuoteModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add New Quote</h2>
+          <button class="close-btn" id="closeAddModal" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="addQuoteForm">
+          <div class="form-group">
+            <label for="adminQuoteText">Quote Text *</label>
+            <textarea 
+              id="adminQuoteText" 
+              name="text" 
+              required 
+              maxlength="500"
+              rows="4"
+              placeholder="Enter the quote text..."
+            ></textarea>
+            <span class="char-count">0/500</span>
+          </div>
+
+          <div class="form-group">
+            <label for="adminAuthor">Author *</label>
+            <input 
+              type="text" 
+              id="adminAuthor" 
+              name="author" 
+              required 
+              maxlength="100"
+              placeholder="e.g., Albert Einstein"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="adminCategory">Category *</label>
+            <select id="adminCategory" name="category" required>
+              <option value="">Select a category</option>
+              <!-- Categories will be populated dynamically -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="adminTags">Tags (optional)</label>
+            <div id="adminSuggestedTags" class="suggested-tags hidden">
+              <span class="suggestions-label">Suggested tags:</span>
+              <div class="tag-suggestions"></div>
+            </div>
+            <div class="tags-input-wrapper">
+              <div class="selected-tags" id="adminSelectedTags"></div>
+              <input 
+                type="text" 
+                id="adminTags" 
+                name="tags" 
+                placeholder="Type to add tags or select suggestions below"
+                aria-label="Enter tags separated by commas"
+                autocomplete="off"
+              />
+            </div>
+            <small class="form-hint">Press Enter or comma to add a tag</small>
+          </div>
+
+          <div class="form-group">
+            <label for="adminStatus">Status *</label>
+            <select id="adminStatus" name="status" required>
+              <option value="approved">Approved (publish immediately)</option>
+              <option value="pending">Pending (requires review)</option>
+            </select>
+          </div>
+
+          <div class="feedback hidden" id="addQuoteFeedback"></div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Quote</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Reject Quote Modal -->
+    <div id="rejectModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="rejectModalTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="rejectModalTitle">Reject Quote</h2>
+          <button class="close-btn" id="closeRejectModal" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="rejectQuoteForm">
+          <div class="form-group">
+            <label for="rejectionReason">Reason for Rejection (Optional)</label>
+            <textarea 
+              id="rejectionReason" 
+              name="reason" 
+              maxlength="500"
+              rows="4"
+              placeholder="Explain why this quote is being rejected..."
+            ></textarea>
+            <span class="char-count">0/500</span>
+            <p class="help-text">Providing a reason helps submitters understand why their quote was rejected.</p>
+          </div>
+
+          <div class="feedback hidden" id="rejectFeedback"></div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelRejectBtn">Cancel</button>
+            <button type="submit" class="btn btn-reject">Reject Quote</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    </div> <!-- End admin-container -->
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>
