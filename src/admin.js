@@ -474,7 +474,12 @@ async function initAdminPanel() {
       
       // Load quotes for selected status with loading state
       const status = this.dataset.status;
-      await withLoadingState(() => loadQuotes(status));
+      try {
+        await withLoadingState(() => loadQuotes(status));
+      } catch (error) {
+        console.error('Error loading quotes:', error);
+        // Error toast is already shown by withLoadingState
+      }
     });
   });
 
