@@ -20,7 +20,6 @@ let allFavorites = [];
 let filteredFavorites = [];
 
 // Swipe gesture constants
-const SWIPE_THRESHOLD_X = 50; // Minimum horizontal distance to trigger swipe
 const SWIPE_THRESHOLD_Y = 100; // Maximum vertical distance allowed for horizontal swipe
 
 // HTML escaping utility to prevent XSS attacks
