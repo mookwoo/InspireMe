@@ -1085,3 +1085,95 @@ body::before {
   }
 }
 
+/* AI Tagging Styles */
+.ai-tag-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ai-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-tag-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.ai-tag-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-tag-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+.ai-tag-btn svg {
+  opacity: 0.9;
+}
+
+.ai-tag-status {
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
+.ai-tag-status.hidden {
+  display: none;
+}
+
+.ai-tag-status.error {
+  color: #ef4444;
+}
+
+.ai-tag-status.success {
+  color: #10b981;
+}
+
+.ai-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.1rem;
+  color: #667eea;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.ai-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  color: #667eea;
+  padding: 8px 12px;
+}
+
+.ai-loading .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

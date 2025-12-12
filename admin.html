@@ -156,6 +156,17 @@
 
           <div class="form-group">
             <label for="adminTags">Tags (optional)</label>
+            <div class="ai-tag-controls">
+              <button type="button" id="aiTagBtn" class="ai-tag-btn" title="Generate tags using AI">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
+                Auto-tag with AI
+              </button>
+              <span id="aiTagStatus" class="ai-tag-status hidden"></span>
+            </div>
             <div id="adminSuggestedTags" class="suggested-tags hidden">
               <span class="suggestions-label">Suggested tags:</span>
               <div class="tag-suggestions"></div>

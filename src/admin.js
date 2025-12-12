@@ -4,6 +4,11 @@ import {
   renderTagSuggestions,
   renderSelectedTags 
 } from "./tag-suggestions.js";
+import { 
+  isAITaggingAvailable, 
+  generateAITags,
+  getHybridTagSuggestions 
+} from "./ai-tagging.js";
 
 // ===== ADMIN AUTHENTICATION USING SUPABASE AUTH =====
 
@@ -638,8 +643,24 @@ async function initAdminPanel() {
   const adminTagSuggestionsContainer = adminSuggestedTagsContainer?.querySelector('.tag-suggestions');
   
   let adminSelectedTags = [];
+  let isAITaggingInProgress = false;
   
-  function updateAdminTagSuggestions() {
+  // Show loading state for AI tagging
+  function showTagLoadingState() {
+    if (adminTagSuggestionsContainer) {
+      adminTagSuggestionsContainer.innerHTML = `
+        <span class="ai-loading">
+          <svg class="spinner" viewBox="0 0 24 24" width="16" height="16">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40 60"/>
+          </svg>
+          AI analyzing quote...
+        </span>
+      `;
+      adminSuggestedTagsContainer?.classList.remove('hidden');
+    }
+  }
+  
+  async function updateAdminTagSuggestions() {
     const quoteText = adminQuoteText.value.trim();
     const author = document.getElementById('adminAuthor')?.value.trim() || '';
     const category = document.getElementById('adminCategory')?.value || '';
@@ -649,16 +670,50 @@ async function initAdminPanel() {
       return;
     }
     
-    const suggestions = generateTagSuggestions(quoteText, author, category, adminSelectedTags);
+    // First, show keyword-based suggestions immediately
+    const keywordSuggestions = generateTagSuggestions(quoteText, author, category, adminSelectedTags);
     
-    if (suggestions.length === 0) {
-      adminSuggestedTagsContainer?.classList.add('hidden');
-      return;
+    if (keywordSuggestions.length > 0) {
+      renderTagSuggestions(keywordSuggestions, adminTagSuggestionsContainer);
+      adminSuggestedTagsContainer?.classList.remove('hidden');
     }
     
-    // Use shared helper to render suggestions
-    renderTagSuggestions(suggestions, adminTagSuggestionsContainer);
-    adminSuggestedTagsContainer?.classList.remove('hidden');
+    // Then try AI tagging if available and not already in progress
+    if (isAITaggingAvailable() && !isAITaggingInProgress) {
+      isAITaggingInProgress = true;
+      
+      try {
+        const result = await getHybridTagSuggestions(
+          quoteText, 
+          author, 
+          category, 
+          adminSelectedTags, 
+          generateTagSuggestions
+        );
+        
+        if (result.combined.length > 0) {
+          // Re-render with AI-enhanced suggestions
+          renderTagSuggestions(result.combined, adminTagSuggestionsContainer);
+          adminSuggestedTagsContainer?.classList.remove('hidden');
+          
+          // Show indicator if AI tags were used
+          if (result.aiTags.length > 0) {
+            const aiIndicator = document.createElement('span');
+            aiIndicator.className = 'ai-indicator';
+            aiIndicator.innerHTML = '✨ AI-enhanced';
+            aiIndicator.title = `AI suggested: ${result.aiTags.join(', ')}`;
+            adminTagSuggestionsContainer?.appendChild(aiIndicator);
+          }
+        }
+      } catch (error) {
+        console.error('AI tagging error:', error);
+        // Keep showing keyword-based suggestions on error
+      } finally {
+        isAITaggingInProgress = false;
+      }
+    } else if (keywordSuggestions.length === 0) {
+      adminSuggestedTagsContainer?.classList.add('hidden');
+    }
   }
   
   function addAdminTag(tag) {
@@ -743,6 +798,85 @@ async function initAdminPanel() {
         removeAdminTag(tag);
       }
     });
+  }
+  
+  // ===== AI TAG BUTTON =====
+  const aiTagBtn = document.getElementById('aiTagBtn');
+  const aiTagStatus = document.getElementById('aiTagStatus');
+  
+  if (aiTagBtn) {
+    aiTagBtn.addEventListener('click', async () => {
+      const quoteText = adminQuoteText.value.trim();
+      
+      if (!quoteText || quoteText.length < 10) {
+        showAITagStatus('Please enter a quote first', 'error');
+        return;
+      }
+      
+      if (!isAITaggingAvailable()) {
+        showAITagStatus('AI not configured. Add VITE_HUGGINGFACE_TOKEN to .env', 'error');
+        return;
+      }
+      
+      // Disable button and show loading
+      aiTagBtn.disabled = true;
+      const originalText = aiTagBtn.innerHTML;
+      aiTagBtn.innerHTML = `
+        <svg class="spinner" viewBox="0 0 24 24" width="16" height="16">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40 60"/>
+        </svg>
+        Analyzing...
+      `;
+      showAITagStatus('', '');
+      
+      try {
+        const result = await generateAITags(quoteText);
+        
+        if (result.error) {
+          showAITagStatus(result.error, 'error');
+        } else if (result.tags.length === 0) {
+          showAITagStatus('No relevant tags found', 'error');
+        } else {
+          // Add all AI-suggested tags
+          let addedCount = 0;
+          for (const tag of result.tags) {
+            if (!adminSelectedTags.includes(tag) && adminSelectedTags.length < 10) {
+              adminSelectedTags.push(tag);
+              addedCount++;
+            }
+          }
+          
+          if (addedCount > 0) {
+            renderAdminSelectedTags();
+            showAITagStatus(`✨ Added ${addedCount} AI tags`, 'success');
+          } else {
+            showAITagStatus('Tags already added', 'error');
+          }
+        }
+      } catch (error) {
+        console.error('AI tagging error:', error);
+        showAITagStatus('Failed to generate tags', 'error');
+      } finally {
+        aiTagBtn.disabled = false;
+        aiTagBtn.innerHTML = originalText;
+      }
+    });
+  }
+  
+  function showAITagStatus(message, type) {
+    if (aiTagStatus) {
+      aiTagStatus.textContent = message;
+      aiTagStatus.className = `ai-tag-status ${type}`;
+      if (message) {
+        aiTagStatus.classList.remove('hidden');
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          aiTagStatus.classList.add('hidden');
+        }, 5000);
+      } else {
+        aiTagStatus.classList.add('hidden');
+      }
+    }
   }
   
   // ===== END TAG SUGGESTION SYSTEM =====
