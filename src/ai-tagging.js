@@ -7,7 +7,7 @@ const HF_TOKEN = import.meta.env.VITE_HUGGINGFACE_TOKEN || '';
 
 // Model for zero-shot classification
 const CLASSIFICATION_MODEL = 'facebook/bart-large-mnli';
-const API_URL = `https://api-inference.huggingface.co/models/${CLASSIFICATION_MODEL}`;
+const API_URL = `https://router.huggingface.co/hf-inference/models/${CLASSIFICATION_MODEL}`;
 
 // All possible tags for classification (these match your existing tag database)
 export const AI_TAG_CANDIDATES = [
@@ -76,28 +76,42 @@ export async function generateAITags(quoteText, candidateLabels = AI_TAG_CANDIDA
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${HF_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
+      mode: 'cors',
       body: JSON.stringify({
         inputs: quoteText,
         parameters: {
           candidate_labels: candidateLabels,
-          multi_label: true  // Allow multiple tags
+          multi_label: true
+        },
+        options: {
+          wait_for_model: true  // Wait for model to load instead of returning 503
         }
       })
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('HF API error:', response.status, errorText);
+      
       // Handle model loading (Hugging Face returns 503 while model is loading)
       if (response.status === 503) {
-        const data = await response.json();
-        const waitTime = data.estimated_time || 20;
         return {
           tags: [],
           scores: [],
-          error: `AI model is loading. Please try again in ${Math.ceil(waitTime)} seconds.`,
+          error: 'AI model is loading. Please try again in 20-30 seconds.',
           isLoading: true,
-          estimatedTime: waitTime
+          estimatedTime: 20
+        };
+      }
+      
+      if (response.status === 401) {
+        return {
+          tags: [],
+          scores: [],
+          error: 'Invalid API token. Please check your VITE_HUGGINGFACE_TOKEN.'
         };
       }
       
@@ -106,13 +120,33 @@ export async function generateAITags(quoteText, candidateLabels = AI_TAG_CANDIDA
 
     const data = await response.json();
     
+    // Handle both array format (new API) and object format (old API)
+    let labels, scores;
+    
+    if (Array.isArray(data)) {
+      // New API format: [{label: "x", score: 0.9}, ...]
+      labels = data.map(item => item.label);
+      scores = data.map(item => item.score);
+    } else if (data.labels && data.scores) {
+      // Old API format: {labels: [...], scores: [...]}
+      labels = data.labels;
+      scores = data.scores;
+    } else {
+      console.error('Unexpected API response:', data);
+      return {
+        tags: [],
+        scores: [],
+        error: 'Unexpected response from AI service.'
+      };
+    }
+    
     // Extract labels that meet confidence threshold
     const results = [];
-    for (let i = 0; i < data.labels.length; i++) {
-      if (data.scores[i] >= CONFIDENCE_THRESHOLD) {
+    for (let i = 0; i < labels.length; i++) {
+      if (scores[i] >= CONFIDENCE_THRESHOLD) {
         results.push({
-          tag: data.labels[i],
-          score: data.scores[i]
+          tag: labels[i],
+          score: scores[i]
         });
       }
     }
@@ -129,6 +163,16 @@ export async function generateAITags(quoteText, candidateLabels = AI_TAG_CANDIDA
 
   } catch (error) {
     console.error('AI tagging error:', error);
+    
+    // Check if it's a network/CORS error
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      return {
+        tags: [],
+        scores: [],
+        error: 'Network error. The AI service may be temporarily unavailable.'
+      };
+    }
+    
     return {
       tags: [],
       scores: [],

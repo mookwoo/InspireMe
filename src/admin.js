@@ -7,6 +7,7 @@ import {
 import { 
   isAITaggingAvailable, 
   generateAITags,
+  generateAITagsWithRetry,
   getHybridTagSuggestions 
 } from "./ai-tagging.js";
 
@@ -827,10 +828,11 @@ async function initAdminPanel() {
         </svg>
         Analyzing...
       `;
-      showAITagStatus('', '');
+      showAITagStatus('Loading AI model...', '');
       
       try {
-        const result = await generateAITags(quoteText);
+        // Use retry version to handle model cold starts
+        const result = await generateAITagsWithRetry(quoteText);
         
         if (result.error) {
           showAITagStatus(result.error, 'error');
