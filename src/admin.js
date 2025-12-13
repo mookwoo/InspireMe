@@ -335,6 +335,22 @@ async function loadQuotes(status = 'pending') {
             Submitted: ${new Date(quote.created_at).toLocaleDateString()}
             ${quote.reviewed_at ? `| Reviewed: ${new Date(quote.reviewed_at).toLocaleDateString()}` : ''}
           </p>
+          <div class="quote-tags-section">
+            <span class="tags-label">Tags:</span>
+            <div class="quote-tags" data-quote-id="${quote.id}">
+              ${(quote.tags && quote.tags.length > 0) 
+                ? quote.tags.map(tag => `<span class="tag-pill">${tag}<button class="remove-quote-tag" data-tag="${tag}" data-quote-id="${quote.id}">×</button></span>`).join('')
+                : '<span class="no-tags">No tags</span>'}
+            </div>
+            <button class="btn btn-ai-tag" data-action="ai-tag" data-quote-id="${quote.id}" title="Generate tags with AI">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+              AI Tag
+            </button>
+          </div>
           ${quote.rejection_reason ? `<p class="rejection-reason">Rejection reason: ${quote.rejection_reason}</p>` : ''}
         </div>
         <div class="quote-actions">
@@ -444,6 +460,148 @@ function showToast(message, type) {
   }, 3000);
 }
 
+// AI Tag a quote from the moderation queue
+async function aiTagQuote(quoteId, button) {
+  // Show loading state
+  const originalHTML = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = `
+    <svg class="spinner" viewBox="0 0 24 24" width="14" height="14">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="40 60"/>
+    </svg>
+    Analyzing...
+  `;
+  
+  try {
+    let quote;
+    
+    // Get quote data
+    if (useMockData || !supabase) {
+      quote = MOCK_ALL_QUOTES.find(q => q.id === quoteId);
+    } else {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('id', quoteId)
+        .single();
+      
+      if (error) throw error;
+      quote = data;
+    }
+    
+    if (!quote) {
+      showToast('Quote not found', 'error');
+      return;
+    }
+    
+    const result = await generateAITagsWithRetry(quote.text);
+    
+    if (result.error) {
+      showToast(result.error, 'error');
+      return;
+    }
+    
+    if (result.tags.length === 0) {
+      showToast('No relevant tags found', 'error');
+      return;
+    }
+    
+    // Merge new tags with existing tags
+    const existingTags = quote.tags || [];
+    const newTags = result.tags.filter(tag => !existingTags.includes(tag));
+    
+    if (newTags.length === 0) {
+      showToast('Quote already has these tags', 'error');
+      return;
+    }
+    
+    const updatedTags = [...existingTags, ...newTags].slice(0, 10);
+    
+    // Update in database or mock
+    if (useMockData || !supabase) {
+      quote.tags = updatedTags;
+      showToast(`Added ${newTags.length} AI tags!`, 'success');
+    } else {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ tags: updatedTags })
+        .eq('id', quoteId);
+      
+      if (error) throw error;
+      showToast(`Added ${newTags.length} AI tags!`, 'success');
+    }
+    
+    // Update the UI
+    updateQuoteTagsUI(quoteId, updatedTags);
+    
+  } catch (error) {
+    console.error('AI tagging error:', error);
+    showToast('Failed to generate tags', 'error');
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalHTML;
+  }
+}
+
+// Remove a tag from a quote
+async function removeTagFromQuote(quoteId, tagToRemove) {
+  try {
+    let quote;
+    
+    if (useMockData || !supabase) {
+      quote = MOCK_ALL_QUOTES.find(q => q.id === quoteId);
+    } else {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('tags')
+        .eq('id', quoteId)
+        .single();
+      
+      if (error) throw error;
+      quote = data;
+    }
+    
+    if (!quote) return;
+    
+    const updatedTags = (quote.tags || []).filter(tag => tag !== tagToRemove);
+    
+    if (useMockData || !supabase) {
+      const mockQuote = MOCK_ALL_QUOTES.find(q => q.id === quoteId);
+      if (mockQuote) mockQuote.tags = updatedTags;
+      showToast('Tag removed', 'success');
+    } else {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ tags: updatedTags })
+        .eq('id', quoteId);
+      
+      if (error) throw error;
+      showToast('Tag removed', 'success');
+    }
+    
+    // Update the UI
+    updateQuoteTagsUI(quoteId, updatedTags);
+    
+  } catch (error) {
+    console.error('Error removing tag:', error);
+    showToast('Failed to remove tag', 'error');
+  }
+}
+
+// Update the tags display in the UI without full reload
+function updateQuoteTagsUI(quoteId, tags) {
+  const tagsContainer = document.querySelector(`.quote-tags[data-quote-id="${quoteId}"]`);
+  if (!tagsContainer) return;
+  
+  if (tags && tags.length > 0) {
+    tagsContainer.innerHTML = tags.map(tag => 
+      `<span class="tag-pill">${tag}<button class="remove-quote-tag" data-tag="${tag}" data-quote-id="${quoteId}">×</button></span>`
+    ).join('');
+  } else {
+    tagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+  }
+}
+
 // Tab filtering
 document.addEventListener('DOMContentLoaded', async function() {
   // Initialize authentication first
@@ -489,9 +647,18 @@ async function initAdminPanel() {
     });
   });
 
-  // Event delegation for approve/reject buttons
+  // Event delegation for approve/reject/ai-tag buttons
   const quotesContainer = document.getElementById('quotesContainer');
-  quotesContainer.addEventListener('click', function(e) {
+  quotesContainer.addEventListener('click', async function(e) {
+    // Handle remove tag button
+    const removeTagBtn = e.target.closest('.remove-quote-tag');
+    if (removeTagBtn) {
+      const tag = removeTagBtn.dataset.tag;
+      const quoteId = parseInt(removeTagBtn.dataset.quoteId, 10);
+      await removeTagFromQuote(quoteId, tag);
+      return;
+    }
+    
     const button = e.target.closest('button[data-action]');
     if (!button) return;
 
@@ -510,6 +677,8 @@ async function initAdminPanel() {
       approveQuote(quoteId);
     } else if (action === 'reject') {
       showRejectModal(quoteId);
+    } else if (action === 'ai-tag') {
+      await aiTagQuote(quoteId, button);
     }
   });
 
