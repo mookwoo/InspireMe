@@ -17,8 +17,27 @@
 ## Tech Stack
 - **HTML5** – Semantic structure  
 - **CSS3** – Custom styling and layout  
-- **JavaScript (Vanilla)** – DOM manipulation and quote logic  
+- **JavaScript (Vanilla)** – DOM manipulation and quote logic
+- **Supabase** – Backend database and authentication
+- **Hugging Face API** – AI-powered automatic tag suggestions  
 - **Netlify** – Deployed for fast, free web hosting  
+
+---
+
+## AI-Powered Tag Suggestions
+
+InspireMe uses Hugging Face's zero-shot classification model to automatically suggest relevant tags for quotes. This helps maintain consistent categorization across the database.
+
+### Setup AI Tagging
+
+1. Get a free API token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Add it to your `.env` file:
+   ```
+   VITE_HUGGINGFACE_TOKEN=your_token_here
+   ```
+3. In the admin panel, click "Auto-tag with AI" when adding quotes
+
+The AI analyzes the quote text and suggests tags like motivation, wisdom, love, courage, etc.  
 
 ---
 
